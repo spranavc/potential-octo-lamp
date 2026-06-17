@@ -1,5 +1,35 @@
 # Claude Setup
 CLAUDE.md
-./claude
+.claude/
 
-implementation-plan.md
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub/
+build/
+pubspec.lock
+.flutter-plugins
+.flutter-plugins-dependencies
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Android
+android/.gradle/
+android/app/build/
+android/local.properties
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+ios/Flutter/Flutter.framework
+ios/Flutter/Flutter.podspec
+
+# Generated files
+lib/data/database/database.g.dart
+
+# OS
+.DS_Store
+Thumbs.db
