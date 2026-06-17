@@ -1,0 +1,18 @@
+workflows:
+  ios-build:
+    name: iOS Build
+    environment:
+      flutter: stable
+      xcode: latest
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: 'main'
+    scripts:
+      - flutter pub get
+      - flutter analyze
+      - flutter test
+      - flutter build ios --release --no-codesign
+    artifacts:
+      - build/ios/ipa/*
