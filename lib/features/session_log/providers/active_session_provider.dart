@@ -86,16 +86,29 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
     );
   }
 
-  void logClimb({
+  /// Logs a climb and immediately persists it to the database.
+  Future<void> logClimb({
     required String gradeSystem,
     required String gradeValue,
     required bool sent,
     int attempts = 1,
     double? rpe,
     List<int>? tagIds,
-  }) {
-    if (!state.isActive) return;
+  }) async {
+    if (!state.isActive || state.sessionId == null) return;
 
+    // Persist immediately so climbs are never lost
+    await _sessionService.logClimb(
+      sessionId: state.sessionId!,
+      gradeSystem: gradeSystem,
+      gradeValue: gradeValue,
+      sent: sent,
+      attempts: attempts,
+      rpe: rpe,
+      tagIds: tagIds,
+    );
+
+    // Update in-memory state for the live counter
     final climb = LoggedClimb(
       gradeSystem: gradeSystem,
       gradeValue: gradeValue,
@@ -114,19 +127,6 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
     if (!state.isActive) return;
 
     await _sessionService.endSession(state.sessionId!);
-
-    // Persist all logged climbs
-    for (final climb in state.climbs) {
-      await _sessionService.logClimb(
-        sessionId: state.sessionId!,
-        gradeSystem: climb.gradeSystem,
-        gradeValue: climb.gradeValue,
-        sent: climb.sent,
-        attempts: climb.attempts,
-        rpe: climb.rpe,
-        tagIds: climb.tagIds,
-      );
-    }
 
     state = const ActiveSessionState();
   }

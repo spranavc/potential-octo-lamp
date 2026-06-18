@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
+import '../../../data/database/database.dart';
+import '../../gyms/providers/gym_providers.dart';
 import '../providers/active_session_provider.dart';
 import '../widgets/swipe_card.dart';
 import '../widgets/grade_picker.dart';
@@ -27,20 +29,65 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
   @override
   void initState() {
     super.initState();
-    // If no active session, start one with a default gym
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final state = ref.read(activeSessionProvider);
-      if (!state.isActive) {
-        _startDefaultSession();
-      }
+      _ensureSessionStarted();
     });
   }
 
-  Future<void> _startDefaultSession() async {
-    // Auto-create a default gym for the session if none exists
-    // For now, gymId=0 signals "unassigned" — Phase 3 will fix this properly
+  Future<void> _ensureSessionStarted() async {
+    final sessionState = ref.read(activeSessionProvider);
+    if (sessionState.isActive) return;
+
+    final gyms = await ref.read(gymListProvider.future);
+
+    if (gyms.isEmpty) {
+      // No gyms — this shouldn't happen since we auto-create a default in Phase 0
+      // but guard anyway
+      if (!mounted) return;
+      final create = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('No Gyms'),
+          content: const Text('You need a gym before starting a session. Create one now?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(ctx).pop(true),
+              child: const Text('Create Gym'),
+            ),
+          ],
+        ),
+      );
+      if (create == true) {
+        context.go('/gyms');
+      }
+      return;
+    }
+
+    if (!mounted) return;
+
+    final int gymId;
+    if (gyms.length == 1) {
+      gymId = gyms.first.id;
+    } else {
+      // Multiple gyms — let user pick
+      gymId = await showDialog<int>(
+            context: context,
+            builder: (ctx) => _GymPickerDialog(gyms: gyms),
+          ) ??
+          -1;
+      if (gymId == -1) {
+        context.go('/session-log');
+        return;
+      }
+    }
+
+    if (!mounted) return;
     try {
-      await ref.read(activeSessionProvider.notifier).start(gymId: 1);
+      await ref.read(activeSessionProvider.notifier).start(gymId: gymId);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -92,7 +139,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     final sessionState = ref.watch(activeSessionProvider);
     final tagNames = _selectedTagIds.isEmpty
         ? ''
-        : _selectedTagIds.join(', '); // Simplified — real names via provider lookup
+        : _selectedTagIds.join(', ');
 
     return PopScope(
       canPop: false,
@@ -184,6 +231,41 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
           ),
         ),
       ),
+    );
+  }
+}
+
+/// Dialog to choose which gym to log a session at.
+class _GymPickerDialog extends StatelessWidget {
+  const _GymPickerDialog({required this.gyms});
+
+  final List<Gym> gyms;
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Select Gym'),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: ListView.builder(
+          shrinkWrap: true,
+          itemCount: gyms.length,
+          itemBuilder: (context, index) {
+            final gym = gyms[index];
+            return ListTile(
+              leading: const Icon(Icons.fitness_center),
+              title: Text(gym.name),
+              onTap: () => Navigator.of(context).pop(gym.id),
+            );
+          },
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(-1),
+          child: const Text('Cancel'),
+        ),
+      ],
     );
   }
 }

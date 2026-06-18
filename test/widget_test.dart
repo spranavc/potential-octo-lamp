@@ -54,7 +54,7 @@ void main() {
     // Tap Gyms tab and verify screen loaded
     await tester.tap(find.text('Gyms'));
     await tester.pumpAndSettle();
-    expect(find.text('No gyms yet'), findsOneWidget);
+    expect(find.text('Welcome to ClimbApp!'), findsOneWidget);
 
     // Tap Projects tab and verify screen loaded
     await tester.tap(find.text('Projects'));

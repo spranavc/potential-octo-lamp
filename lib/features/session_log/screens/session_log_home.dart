@@ -105,9 +105,7 @@ class _SessionCard extends StatelessWidget {
         trailing: session.endedAt != null
             ? const Icon(Icons.check_circle, color: Colors.green)
             : const Icon(Icons.fiber_manual_record, color: Colors.red, size: 12),
-        onTap: () {
-          // Will navigate to session summary in future
-        },
+        onTap: () => context.go('/session-log/${session.id}'),
       ),
     );
   }

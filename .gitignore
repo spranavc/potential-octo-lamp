@@ -2,6 +2,9 @@
 CLAUDE.md
 .claude/
 
+# Docs (personal reference, not part of the app)
+docs/
+
 # Flutter / Dart
 .dart_tool/
 .packages

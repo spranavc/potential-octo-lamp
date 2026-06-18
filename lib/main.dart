@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -11,19 +10,17 @@ void main() {
 
   AppDatabase? database;
 
-  // Only create the database on native platforms. Web will use an in-memory
-  // fallback via the provider override (configured in the session screens).
   try {
     database = AppDatabase();
   } catch (_) {
-    // Web or unsupported platform — database will be a no-op stub
+    // Web or unsupported platform — database stubbed
   }
 
   runApp(
     ProviderScope(
       overrides: [
         if (database != null)
-          databaseProvider.overrideWithValue(database!),
+          databaseProvider.overrideWithValue(database),
       ],
       child: const ClimbApp(),
     ),

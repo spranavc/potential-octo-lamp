@@ -1,5 +1,3 @@
-import 'dart:async';
-
 import 'package:drift/drift.dart';
 
 /// Placeholder web connection that returns an empty database.

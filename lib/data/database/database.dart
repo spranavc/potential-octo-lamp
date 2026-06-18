@@ -68,8 +68,20 @@ class ClimbsDao extends DatabaseAccessor<AppDatabase> with _$ClimbsDaoMixin {
             ..orderBy([(c) => OrderingTerm.asc(c.loggedAt)]))
           .get();
 
+  Future<List<Climb>> getAll() =>
+      (select(climbs)..orderBy([(c) => OrderingTerm.asc(c.loggedAt)])).get();
+
   Future<Climb?> getById(int id) =>
       (select(climbs)..where((c) => c.id.equals(id))).getSingleOrNull();
+
+  /// Returns tags attached to [climbId] via the ClimbTags join table.
+  Future<List<Tag>> getTagsForClimb(int climbId) {
+    final query = select(climbTags).join([
+      innerJoin(tags, tags.id.equalsExp(climbTags.tagId)),
+    ])
+      ..where(climbTags.climbId.equals(climbId));
+    return query.map((row) => row.readTable(tags)).get();
+  }
 
   Future<int> insertClimb(ClimbsCompanion climb) =>
       into(climbs).insert(climb);

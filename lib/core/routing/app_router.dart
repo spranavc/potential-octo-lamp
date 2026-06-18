@@ -4,14 +4,18 @@ import 'package:go_router/go_router.dart';
 import '../../features/session_log/screens/session_log_home.dart';
 import '../../features/session_log/screens/active_session_screen.dart';
 import '../../features/session_log/screens/session_summary_screen.dart';
+import '../../features/session_log/screens/session_detail_screen.dart';
 import '../../features/analytics/screens/analytics_dashboard.dart';
 import '../../features/gyms/screens/gyms_list_screen.dart';
+import '../../features/gyms/screens/gym_detail_screen.dart';
+import '../../features/gyms/screens/gym_colors_screen.dart';
 import '../../features/projects/screens/projects_list_screen.dart';
+import '../../features/projects/screens/project_detail_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/session-log',
+    initialLocation: '/gyms',
     routes: [
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -35,6 +39,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     name: 'session-summary',
                     builder: (context, state) => const SessionSummaryScreen(),
                   ),
+                  GoRoute(
+                    path: ':sessionId',
+                    name: 'session-detail',
+                    builder: (context, state) {
+                      final sessionId = int.parse(state.pathParameters['sessionId']!);
+                      return SessionDetailScreen(sessionId: sessionId);
+                    },
+                  ),
                 ],
               ),
             ],
@@ -54,6 +66,26 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/gyms',
                 name: 'gyms',
                 builder: (context, state) => const GymsListScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':gymId',
+                    name: 'gym-detail',
+                    builder: (context, state) {
+                      final gymId = int.parse(state.pathParameters['gymId']!);
+                      return GymDetailScreen(gymId: gymId);
+                    },
+                    routes: [
+                      GoRoute(
+                        path: 'colors',
+                        name: 'gym-colors',
+                        builder: (context, state) {
+                          final gymId = int.parse(state.pathParameters['gymId']!);
+                          return GymColorsScreen(gymId: gymId);
+                        },
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ],
           ),
@@ -63,6 +95,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/projects',
                 name: 'projects',
                 builder: (context, state) => const ProjectsListScreen(),
+                routes: [
+                  GoRoute(
+                    path: ':projectId',
+                    name: 'project-detail',
+                    builder: (context, state) {
+                      final projectId = int.parse(state.pathParameters['projectId']!);
+                      return ProjectDetailScreen(projectId: projectId);
+                    },
+                  ),
+                ],
               ),
             ],
           ),

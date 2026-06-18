@@ -6,10 +6,15 @@ class ClimbRepository {
 
   final AppDatabase db;
 
+  Future<List<Climb>> getAll() => db.climbsDao.getAll();
+
   Future<List<Climb>> getBySessionId(int sessionId) =>
       db.climbsDao.getBySessionId(sessionId);
 
   Future<Climb?> getById(int id) => db.climbsDao.getById(id);
+
+  Future<List<Tag>> getTagsForClimb(int climbId) =>
+      db.climbsDao.getTagsForClimb(climbId);
 
   Future<int> log({
     required int sessionId,
