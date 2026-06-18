@@ -47,33 +47,29 @@ class _TagChipRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      child: Row(
-        children: tags.map((tag) {
-          final isSelected = selectedIds.contains(tag.id);
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: FilterChip(
-              label: Text(_tagLabel(tag.name)),
-              selected: isSelected,
-              onSelected: (selected) {
-                final newIds = List<int>.from(selectedIds);
-                if (selected) {
-                  newIds.add(tag.id);
-                } else {
-                  newIds.remove(tag.id);
-                }
-                onChanged(newIds);
-              },
-              avatar: Icon(
-                _tagIcon(tag.name),
-                size: 18,
-              ),
-            ),
-          );
-        }).toList(),
-      ),
+    return Wrap(
+      spacing: 6,
+      runSpacing: 4,
+      children: tags.map((tag) {
+        final isSelected = selectedIds.contains(tag.id);
+        return FilterChip(
+          label: Text(_tagLabel(tag.name)),
+          selected: isSelected,
+          onSelected: (selected) {
+            final newIds = List<int>.from(selectedIds);
+            if (selected) {
+              newIds.add(tag.id);
+            } else {
+              newIds.remove(tag.id);
+            }
+            onChanged(newIds);
+          },
+          avatar: Icon(
+            _tagIcon(tag.name),
+            size: 18,
+          ),
+        );
+      }).toList(),
     );
   }
 

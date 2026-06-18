@@ -89,7 +89,7 @@ class ProjectDetailScreen extends ConsumerWidget {
                         ),
                         title: Text('${climb.gradeSystem} ${climb.gradeValue}'),
                         subtitle: Text(
-                          '${climb.sent ? "Sent" : "Failed"} · ${climb.attempts} ${_pluralize(climb.attempts, "attempt")}  —  $date',
+                          '${climb.sent ? "Sent" : "Failed"} · Problem #${climb.problemNumber} · Att #${climb.attemptNumber}  —  $date',
                           style: const TextStyle(fontSize: 12),
                         ),
                       );

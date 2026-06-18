@@ -46,31 +46,50 @@ class ActivityHeatmap extends StatelessWidget {
     final totalDays = endSunday.difference(startMonday).inDays + 1;
     final weeks = (totalDays / 7).ceil();
 
-    return SizedBox(
-      height: 140,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          // Day labels
-          const _DayLabels(),
-          const SizedBox(width: 4),
-          // Heatmap grid
-          for (int col = 0; col < weeks; col++)
-            Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                for (int row = 0; row < 7; row++)
-                  _Cell(
-                    date: startMonday.add(Duration(days: col * 7 + row)),
-                    count: countMap,
-                    maxCount: maxCount,
-                  ),
-              ],
-            ),
-        ],
-      ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        SizedBox(
+          height: 140,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Day labels
+              const _DayLabels(),
+              const SizedBox(width: 4),
+              // Heatmap grid
+              for (int col = 0; col < weeks; col++)
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    for (int row = 0; row < 7; row++)
+                      _Cell(
+                        date: startMonday.add(Duration(days: col * 7 + row)),
+                        count: countMap,
+                        maxCount: maxCount,
+                      ),
+                  ],
+                ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 8),
+        const _Legend(),
+      ],
     );
   }
+}
+
+Color _heatmapColor(int count, int max) {
+  if (count == 0) {
+    return const Color(0xFFE0E0E0); // empty cell
+  }
+  final intensity = max > 0 ? count / max : 0.0;
+  return Color.lerp(
+    const Color(0xFFC8E6C9),
+    const Color(0xFF2E7D32),
+    intensity,
+  )!;
 }
 
 class _Cell extends StatelessWidget {
@@ -87,19 +106,6 @@ class _Cell extends StatelessWidget {
   static const _cellSize = 14.0;
   static const _cellGap = 2.0;
 
-  Color _color(int count, int max) {
-    if (count == 0) {
-      return const Color(0xFFE0E0E0); // empty cell
-    }
-    final intensity = max > 0 ? count / max : 0.0;
-    // Scale from light green to dark green
-    return Color.lerp(
-      const Color(0xFFC8E6C9),
-      const Color(0xFF2E7D32),
-      intensity,
-    )!;
-  }
-
   @override
   Widget build(BuildContext context) {
     final key = '${date.year}-${date.month}-${date.day}';
@@ -112,7 +118,7 @@ class _Cell extends StatelessWidget {
         height: _cellSize,
         margin: const EdgeInsets.all(_cellGap / 2),
         decoration: BoxDecoration(
-          color: _color(c, maxCount),
+          color: _heatmapColor(c, maxCount),
           borderRadius: BorderRadius.circular(2),
         ),
       ),
@@ -141,6 +147,40 @@ class _DayLabels extends StatelessWidget {
               ),
             ),
           ),
+      ],
+    );
+  }
+}
+
+class _Legend extends StatelessWidget {
+  const _Legend();
+
+  static const _steps = [
+    Color(0xFFE0E0E0),
+    Color(0xFFC8E6C9),
+    Color(0xFF66BB6A),
+    Color(0xFF2E7D32),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const Text('Less', style: TextStyle(fontSize: 11, color: Colors.grey)),
+        const SizedBox(width: 4),
+        for (final color in _steps)
+          Container(
+            width: 12,
+            height: 12,
+            margin: const EdgeInsets.symmetric(horizontal: 1),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+        const SizedBox(width: 4),
+        const Text('More', style: TextStyle(fontSize: 11, color: Colors.grey)),
       ],
     );
   }

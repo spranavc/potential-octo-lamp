@@ -52,12 +52,16 @@ void main() {
         gradeSystem: 'V-scale',
         gradeValue: 'V3',
         sent: true,
+        attemptNumber: 1,
+        problemNumber: 1,
       );
       await repo.log(
         sessionId: sessionId,
         gradeSystem: 'V-scale',
         gradeValue: 'V5',
         sent: false,
+        attemptNumber: 1,
+        problemNumber: 1,
       );
 
       final climbs = await container.read(allClimbsProvider.future);
@@ -84,9 +88,9 @@ void main() {
       );
 
       final repo = container.read(climbRepositoryProvider);
-      await repo.log(sessionId: sessionId, gradeSystem: 'V-scale', gradeValue: 'V2', sent: true);
-      await repo.log(sessionId: sessionId, gradeSystem: 'V-scale', gradeValue: 'V2', sent: false);
-      await repo.log(sessionId: sessionId, gradeSystem: 'V-scale', gradeValue: 'V4', sent: true);
+      await repo.log(sessionId: sessionId, gradeSystem: 'V-scale', gradeValue: 'V2', sent: true, attemptNumber: 1, problemNumber: 1);
+      await repo.log(sessionId: sessionId, gradeSystem: 'V-scale', gradeValue: 'V2', sent: false, attemptNumber: 1, problemNumber: 1);
+      await repo.log(sessionId: sessionId, gradeSystem: 'V-scale', gradeValue: 'V4', sent: true, attemptNumber: 1, problemNumber: 1);
 
       final data = await container.read(gradeDistributionProvider.future);
       final v2 = data.firstWhere((p) => p.gradeLabel == 'V2');
@@ -111,7 +115,7 @@ void main() {
       );
 
       final repo = container.read(climbRepositoryProvider);
-      await repo.log(sessionId: sessionId, gradeSystem: 'V-scale', gradeValue: 'V1', sent: true);
+      await repo.log(sessionId: sessionId, gradeSystem: 'V-scale', gradeValue: 'V1', sent: true, attemptNumber: 1, problemNumber: 1);
 
       final data = await container.read(activityHeatmapProvider.future);
       expect(data.length, 1);

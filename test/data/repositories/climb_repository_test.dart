@@ -31,6 +31,8 @@ void main() {
         gradeSystem: 'V-scale',
         gradeValue: 'V5',
         sent: true,
+        attemptNumber: 1,
+        problemNumber: 1,
       );
 
       final climb = await repo.getById(id);
@@ -38,22 +40,23 @@ void main() {
       expect(climb!.gradeSystem, 'V-scale');
       expect(climb.gradeValue, 'V5');
       expect(climb.sent, isTrue);
-      expect(climb.attempts, 1); // default
+      expect(climb.attemptNumber, 1);
     });
 
-    test('logs a fail climb with attempts and RPE', () async {
+    test('logs a fail climb with attempt and RPE', () async {
       final id = await repo.log(
         sessionId: sessionId,
         gradeSystem: 'Font',
         gradeValue: '6B+',
         sent: false,
-        attempts: 5,
+        attemptNumber: 3,
+        problemNumber: 1,
         rpe: 8.0,
       );
 
       final climb = await repo.getById(id);
       expect(climb!.sent, isFalse);
-      expect(climb.attempts, 5);
+      expect(climb.attemptNumber, 3);
       expect(climb.rpe, 8.0);
     });
 
@@ -69,10 +72,11 @@ void main() {
         gradeSystem: 'V-scale',
         gradeValue: 'V4',
         sent: true,
+        attemptNumber: 1,
+        problemNumber: 1,
         tagIds: tagIds,
       );
 
-      // Verify tags were attached via climb_tags join table
       final query = db.select(db.climbTags)
         ..where((ct) => ct.climbId.equals(climbId));
       final links = await query.get();
@@ -81,27 +85,27 @@ void main() {
 
     test('throws ArgumentError for invalid inputs', () async {
       expect(
-        () => repo.log(sessionId: 0, gradeSystem: 'V', gradeValue: 'V5', sent: true),
+        () => repo.log(sessionId: 0, gradeSystem: 'V', gradeValue: 'V5', sent: true, attemptNumber: 1, problemNumber: 1),
         throwsArgumentError,
       );
       expect(
-        () => repo.log(sessionId: sessionId, gradeSystem: '', gradeValue: 'V5', sent: true),
+        () => repo.log(sessionId: sessionId, gradeSystem: '', gradeValue: 'V5', sent: true, attemptNumber: 1, problemNumber: 1),
         throwsArgumentError,
       );
       expect(
-        () => repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: '', sent: true),
+        () => repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: '', sent: true, attemptNumber: 1, problemNumber: 1),
         throwsArgumentError,
       );
       expect(
-        () => repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V5', sent: true, attempts: 0),
+        () => repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V5', sent: true, attemptNumber: 0, problemNumber: 1),
         throwsArgumentError,
       );
       expect(
-        () => repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V5', sent: true, rpe: 11),
+        () => repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V5', sent: true, attemptNumber: 1, problemNumber: 1, rpe: 11),
         throwsArgumentError,
       );
       expect(
-        () => repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V5', sent: true, rpe: 0),
+        () => repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V5', sent: true, attemptNumber: 1, problemNumber: 1, rpe: 0),
         throwsArgumentError,
       );
     });
@@ -109,19 +113,19 @@ void main() {
 
   group('getBySessionId', () {
     test('returns climbs ordered by loggedAt', () async {
-      await repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V2', sent: true);
-      await repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V6', sent: false);
+      await repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V2', sent: true, attemptNumber: 1, problemNumber: 1);
+      await repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V6', sent: false, attemptNumber: 2, problemNumber: 1);
 
       final climbs = await repo.getBySessionId(sessionId);
       expect(climbs.length, 2);
-      expect(climbs[0].gradeValue, 'V2'); // oldest first
+      expect(climbs[0].gradeValue, 'V2');
     });
   });
 
   group('countBySession', () {
     test('returns correct count', () async {
-      await repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V1', sent: true);
-      await repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V3', sent: true);
+      await repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V1', sent: true, attemptNumber: 1, problemNumber: 1);
+      await repo.log(sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V3', sent: true, attemptNumber: 1, problemNumber: 2);
 
       expect(await repo.countBySession(sessionId), 2);
     });
@@ -130,7 +134,7 @@ void main() {
   group('delete', () {
     test('removes the climb', () async {
       final id = await repo.log(
-        sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V0', sent: true,
+        sessionId: sessionId, gradeSystem: 'V', gradeValue: 'V0', sent: true, attemptNumber: 1, problemNumber: 1,
       );
       await repo.delete(id);
       expect(await repo.getById(id), isNull);

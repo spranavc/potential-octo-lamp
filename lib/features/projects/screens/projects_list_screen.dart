@@ -57,7 +57,7 @@ class ProjectsListScreen extends ConsumerWidget {
               final project = projects[index];
               return ProjectCard(
                 project: project,
-                onTap: () => context.go('/projects/${project.id}'),
+                onTap: () => context.go('/session-log/projects/${project.id}'),
               );
             },
           );

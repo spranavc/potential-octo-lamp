@@ -18,6 +18,7 @@ class SwipeCard extends StatefulWidget {
     required this.onSend,
     required this.onFail,
     this.onEditGrade,
+    this.projectName,
   });
 
   final String gradeSystem;
@@ -29,6 +30,7 @@ class SwipeCard extends StatefulWidget {
   final VoidCallback onSend;
   final VoidCallback onFail;
   final VoidCallback? onEditGrade;
+  final String? projectName;
 
   @override
   State<SwipeCard> createState() => _SwipeCardState();
@@ -98,6 +100,26 @@ class _SwipeCardState extends State<SwipeCard> {
 
                 const SizedBox(height: 16),
 
+                // Project indicator
+                if (widget.projectName != null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.rocket_launch, size: 14, color: theme.colorScheme.primary),
+                        const SizedBox(width: 4),
+                        Text(
+                          widget.projectName!,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+
                 // Tags
                 if (widget.tagLabels.isNotEmpty)
                   Text(
@@ -113,7 +135,7 @@ class _SwipeCardState extends State<SwipeCard> {
 
                 // Attempts
                 Text(
-                  '${widget.attempts} attempt${widget.attempts == 1 ? '' : 's'}',
+                  'Attempt #${widget.attempts}',
                   style: theme.textTheme.bodySmall,
                 ),
 

@@ -56,10 +56,8 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Welcome to ClimbApp!'), findsOneWidget);
 
-    // Tap Projects tab and verify screen loaded
-    await tester.tap(find.text('Projects'));
-    await tester.pumpAndSettle();
-    expect(find.text('No projects yet'), findsOneWidget);
+    // Verify Projects is no longer a tab (it's a sub-screen under Session Log)
+    expect(find.text('Projects'), findsNothing);
 
     // Tap Settings tab and verify screen loaded
     await tester.tap(find.text('Settings'));

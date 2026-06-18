@@ -54,8 +54,10 @@ class Climbs extends Table {
   TextColumn get gradeSystem => text()();  // "V-scale" or "Font"
   TextColumn get gradeValue => text()();   // e.g. "V5", "7A"
   BoolColumn get sent => boolean()();
-  IntColumn get attempts => integer().withDefault(const Constant(1))();
+  IntColumn get attemptNumber => integer().withDefault(const Constant(1))();
+  IntColumn get problemNumber => integer().withDefault(const Constant(1))();
   RealColumn get rpe => real().nullable()();
+  IntColumn get completionPercent => integer().nullable()();
   TextColumn get notes => text().nullable()();
   DateTimeColumn get loggedAt => dateTime()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();

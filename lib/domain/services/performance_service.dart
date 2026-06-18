@@ -113,7 +113,7 @@ class PerformanceService {
         climbOrder: i + 1,
         gradeNum: gradeNum,
         sent: climb.sent,
-        gradeLabel: '${climb.gradeSystem == 'Font' ? '' : 'V'}$gradeNum',
+        gradeLabel: climb.gradeValue,
       ));
     }
     return result;

@@ -80,6 +80,7 @@ class AnalyticsService {
   /// Converts a V-scale grade string (e.g. "V5") to a numeric value.
   /// Returns null for unrecognized formats.
   static int? vGradeToNum(String gradeValue) {
+    if (gradeValue == 'V-Intro') return 0;
     if (gradeValue.startsWith('V')) {
       return int.tryParse(gradeValue.substring(1));
     }
@@ -274,7 +275,7 @@ class AnalyticsService {
       if (climb.sent) {
         sends[num] = (sends[num] ?? 0) + 1;
       }
-      total[num] = (total[num] ?? 0) + climb.attempts;
+      total[num] = (total[num] ?? 0) + climb.attemptNumber;
     }
 
     final result = <SendRatePoint>[];
