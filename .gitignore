@@ -5,6 +5,9 @@ CLAUDE.md
 # Docs (personal reference, not part of the app)
 docs/
 
+# Voice prompt scripts (local utility, not part of the app)
+scripts/
+
 # Flutter / Dart
 .dart_tool/
 .packages

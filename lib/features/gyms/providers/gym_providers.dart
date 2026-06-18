@@ -23,13 +23,6 @@ final gymWallsProvider =
   return repo.getWalls(gymId);
 });
 
-/// Color-to-grade mappings for a specific gym.
-final gymColorsProvider =
-    FutureProvider.family<List<GymColor>, int>((ref, gymId) async {
-  final repo = ref.watch(gymRepositoryProvider);
-  return repo.getColors(gymId);
-});
-
 /// Recent sessions at a specific gym.
 final gymSessionsProvider =
     FutureProvider.family<List<Session>, int>((ref, gymId) async {

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../data/database/database.dart';
+import '../../../shared/utils/time_format.dart';
 import '../providers/session_list_provider.dart';
 import '../providers/active_session_provider.dart';
 
@@ -18,6 +19,11 @@ class SessionLogHome extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Session Log'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.rocket_launch),
+            tooltip: 'Projects',
+            onPressed: () => context.go('/session-log/projects'),
+          ),
           if (isLogging)
             TextButton.icon(
               onPressed: () => context.go('/session-log/active'),
@@ -93,8 +99,8 @@ class _SessionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final startedAt = session.startedAt;
-    final date = '${startedAt.month}/${startedAt.day}/${startedAt.year}';
-    final time = '${startedAt.hour}:${startedAt.minute.toString().padLeft(2, '0')}';
+    final date = formatDateFull(startedAt);
+    final time = formatTime(startedAt);
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -105,7 +111,13 @@ class _SessionCard extends StatelessWidget {
         trailing: session.endedAt != null
             ? const Icon(Icons.check_circle, color: Colors.green)
             : const Icon(Icons.fiber_manual_record, color: Colors.red, size: 12),
-        onTap: () => context.go('/session-log/${session.id}'),
+        onTap: () {
+          if (session.endedAt != null) {
+            context.go('/session-log/${session.id}');
+          } else {
+            context.go('/session-log/active');
+          }
+        },
       ),
     );
   }

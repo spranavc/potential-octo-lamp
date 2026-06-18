@@ -9,7 +9,7 @@ Climb _makeClimb({
   required String gradeSystem,
   required String gradeValue,
   required bool sent,
-  int attempts = 1,
+  int attempts = 1, int problemNumber = 1,
   DateTime? loggedAt,
 }) {
   return Climb(
@@ -18,7 +18,8 @@ Climb _makeClimb({
     gradeSystem: gradeSystem,
     gradeValue: gradeValue,
     sent: sent,
-    attempts: attempts,
+    attemptNumber: attempts,
+    problemNumber: problemNumber,
     rpe: null,
     notes: null,
     loggedAt: loggedAt ?? DateTime(2025, 1, 1),
@@ -43,7 +44,7 @@ void main() {
     test('returns null for invalid V-scale grades', () {
       expect(AnalyticsService.vGradeToNum('5'), isNull);
       expect(AnalyticsService.vGradeToNum('v5'), isNull);
-      expect(AnalyticsService.vGradeToNum('VB'), isNull);
+      expect(AnalyticsService.vGradeToNum('V-Intro'), 0);
     });
 
     test('converts Font grades to numeric', () {

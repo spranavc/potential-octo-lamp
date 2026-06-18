@@ -8,7 +8,6 @@ import '../../features/session_log/screens/session_detail_screen.dart';
 import '../../features/analytics/screens/analytics_dashboard.dart';
 import '../../features/gyms/screens/gyms_list_screen.dart';
 import '../../features/gyms/screens/gym_detail_screen.dart';
-import '../../features/gyms/screens/gym_colors_screen.dart';
 import '../../features/projects/screens/projects_list_screen.dart';
 import '../../features/projects/screens/project_detail_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
@@ -38,6 +37,21 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     path: 'summary',
                     name: 'session-summary',
                     builder: (context, state) => const SessionSummaryScreen(),
+                  ),
+                  GoRoute(
+                    path: 'projects',
+                    name: 'session-log-projects',
+                    builder: (context, state) => const ProjectsListScreen(),
+                    routes: [
+                      GoRoute(
+                        path: ':projectId',
+                        name: 'session-log-project-detail',
+                        builder: (context, state) {
+                          final projectId = int.parse(state.pathParameters['projectId']!);
+                          return ProjectDetailScreen(projectId: projectId);
+                        },
+                      ),
+                    ],
                   ),
                   GoRoute(
                     path: ':sessionId',
@@ -73,35 +87,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                     builder: (context, state) {
                       final gymId = int.parse(state.pathParameters['gymId']!);
                       return GymDetailScreen(gymId: gymId);
-                    },
-                    routes: [
-                      GoRoute(
-                        path: 'colors',
-                        name: 'gym-colors',
-                        builder: (context, state) {
-                          final gymId = int.parse(state.pathParameters['gymId']!);
-                          return GymColorsScreen(gymId: gymId);
-                        },
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-            ],
-          ),
-          StatefulShellBranch(
-            routes: [
-              GoRoute(
-                path: '/projects',
-                name: 'projects',
-                builder: (context, state) => const ProjectsListScreen(),
-                routes: [
-                  GoRoute(
-                    path: ':projectId',
-                    name: 'project-detail',
-                    builder: (context, state) {
-                      final projectId = int.parse(state.pathParameters['projectId']!);
-                      return ProjectDetailScreen(projectId: projectId);
                     },
                   ),
                 ],
@@ -150,11 +135,6 @@ class ScaffoldWithNav extends StatelessWidget {
             icon: Icon(Icons.fitness_center_outlined),
             selectedIcon: Icon(Icons.fitness_center),
             label: 'Gyms',
-          ),
-          NavigationDestination(
-            icon: Icon(Icons.rocket_launch_outlined),
-            selectedIcon: Icon(Icons.rocket_launch),
-            label: 'Projects',
           ),
           NavigationDestination(
             icon: Icon(Icons.settings_outlined),

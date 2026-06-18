@@ -9,7 +9,7 @@ Climb _makeClimb({
   required String gradeSystem,
   required String gradeValue,
   required bool sent,
-  int attempts = 1,
+  int attempts = 1, int problemNumber = 1,
   double? rpe,
   DateTime? loggedAt,
 }) {
@@ -19,7 +19,8 @@ Climb _makeClimb({
     gradeSystem: gradeSystem,
     gradeValue: gradeValue,
     sent: sent,
-    attempts: attempts,
+    attemptNumber: attempts,
+    problemNumber: problemNumber,
     rpe: rpe,
     notes: null,
     loggedAt: loggedAt ?? DateTime(2025, 1, 1),
@@ -96,7 +97,7 @@ void main() {
           id: 2,
           sessionId: 1,
           gradeSystem: 'V-scale',
-          gradeValue: 'VB',
+          gradeValue: 'V-Intro',
           sent: false,
         ),
         _makeClimb(
@@ -109,9 +110,10 @@ void main() {
       ];
 
       final result = service.sessionPerformanceCurve(climbs);
-      expect(result.length, 2); // VB skipped, 7A parsed
+      expect(result.length, 3); // V3, V-Intro, 7A (all parsed, in climb order)
       expect(result[0].gradeLabel, 'V3');
-      expect(result[1].gradeLabel, '8'); // Font 7A maps to 8
+      expect(result[1].gradeLabel, 'V-Intro');
+      expect(result[2].gradeLabel, '7A');
     });
   });
 

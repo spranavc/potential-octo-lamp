@@ -16,15 +16,21 @@ class ClimbRepository {
   Future<List<Tag>> getTagsForClimb(int climbId) =>
       db.climbsDao.getTagsForClimb(climbId);
 
+  Future<List<Project>> getProjectsForClimb(int climbId) =>
+      db.climbsDao.getProjectsForClimb(climbId);
+
   Future<int> log({
     required int sessionId,
     required String gradeSystem,
     required String gradeValue,
     required bool sent,
-    int attempts = 1,
+    required int attemptNumber,
+    required int problemNumber,
     double? rpe,
+    int? completionPercent,
     String? notes,
     List<int>? tagIds,
+    List<int>? projectIds,
   }) async {
     if (sessionId <= 0) {
       throw ArgumentError('Invalid session ID');
@@ -32,8 +38,8 @@ class ClimbRepository {
     if (gradeSystem.trim().isEmpty || gradeValue.trim().isEmpty) {
       throw ArgumentError('Grade system and value are required');
     }
-    if (attempts < 1) {
-      throw ArgumentError('Attempts must be at least 1');
+    if (attemptNumber < 1) {
+      throw ArgumentError('Attempt number must be at least 1');
     }
     if (rpe != null && (rpe < 1 || rpe > 10)) {
       throw ArgumentError('RPE must be between 1 and 10');
@@ -45,8 +51,10 @@ class ClimbRepository {
         gradeSystem: gradeSystem.trim(),
         gradeValue: gradeValue.trim(),
         sent: sent,
-        attempts: Value(attempts),
+        attemptNumber: Value(attemptNumber),
+        problemNumber: Value(problemNumber),
         rpe: Value(rpe),
+        completionPercent: Value(completionPercent),
         notes: Value(notes?.trim()),
         loggedAt: DateTime.now(),
       ),
@@ -59,6 +67,18 @@ class ClimbRepository {
           b.insert(db.climbTags, ClimbTagsCompanion.insert(
             climbId: climbId,
             tagId: tagId,
+          ));
+        }
+      });
+    }
+
+    // Attach to projects if provided
+    if (projectIds != null && projectIds.isNotEmpty) {
+      await db.batch((b) {
+        for (final projectId in projectIds) {
+          b.insert(db.projectClimbs, ProjectClimbsCompanion.insert(
+            projectId: projectId,
+            climbId: climbId,
           ));
         }
       });

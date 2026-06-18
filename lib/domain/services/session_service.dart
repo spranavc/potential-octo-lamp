@@ -18,26 +18,37 @@ class SessionService {
     return sessionRepo.end(sessionId);
   }
 
+  /// Delete a session and its climbs (cascaded).
+  Future<void> deleteSession(int sessionId) {
+    return sessionRepo.delete(sessionId);
+  }
+
   /// Log a single climb attempt within a session.
   Future<int> logClimb({
     required int sessionId,
     required String gradeSystem,
     required String gradeValue,
     required bool sent,
-    int attempts = 1,
+    required int attemptNumber,
+    required int problemNumber,
     double? rpe,
+    int? completionPercent,
     String? notes,
     List<int>? tagIds,
+    List<int>? projectIds,
   }) {
     return climbRepo.log(
       sessionId: sessionId,
       gradeSystem: gradeSystem,
       gradeValue: gradeValue,
       sent: sent,
-      attempts: attempts,
+      attemptNumber: attemptNumber,
+      problemNumber: problemNumber,
       rpe: rpe,
+      completionPercent: completionPercent,
       notes: notes,
       tagIds: tagIds,
+      projectIds: projectIds,
     );
   }
 

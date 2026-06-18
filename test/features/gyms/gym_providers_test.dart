@@ -95,27 +95,6 @@ void main() {
     });
   });
 
-  group('gymColorsProvider', () {
-    test('emits color mappings for a gym', () async {
-      final container = createContainer();
-
-      final repo = container.read(gymRepositoryProvider);
-      final gymId = await repo.create('Color Gym');
-      await repo.addColor(
-        gymId: gymId, colorName: 'Red', colorHex: '#FF0000',
-        gradeSystem: 'V-scale', gradeValue: 'V4',
-      );
-      await repo.addColor(
-        gymId: gymId, colorName: 'Blue', colorHex: '#0000FF',
-        gradeSystem: 'V-scale', gradeValue: 'V6',
-      );
-
-      final colors = await container.read(gymColorsProvider(gymId).future);
-      expect(colors.length, 2);
-      expect(colors.map((c) => c.colorName), containsAll(['Red', 'Blue']));
-    });
-  });
-
   group('gymSessionsProvider', () {
     test('emits sessions for a gym', () async {
       final container = createContainer();

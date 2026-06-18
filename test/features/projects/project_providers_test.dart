@@ -115,13 +115,13 @@ void main() {
       // Log some climbs
       final climbRepo = container.read(climbRepositoryProvider);
       final climb1Id = await climbRepo.log(
-        sessionId: sessionId,
+        sessionId: sessionId, attemptNumber: 1, problemNumber: 1,
         gradeSystem: 'V-scale',
         gradeValue: 'V4',
         sent: true,
       );
       final climb2Id = await climbRepo.log(
-        sessionId: sessionId,
+        sessionId: sessionId, attemptNumber: 1, problemNumber: 1,
         gradeSystem: 'V-scale',
         gradeValue: 'V4',
         sent: false,
@@ -180,7 +180,7 @@ void main() {
       // 3 sends, 2 fails = 3/5 = 60%
       for (var i = 0; i < 3; i++) {
         final climbId = await climbRepo.log(
-          sessionId: sessionId,
+          sessionId: sessionId, attemptNumber: 1, problemNumber: 1,
           gradeSystem: 'V-scale',
           gradeValue: 'V5',
           sent: true,
@@ -194,7 +194,7 @@ void main() {
       }
       for (var i = 0; i < 2; i++) {
         final climbId = await climbRepo.log(
-          sessionId: sessionId,
+          sessionId: sessionId, attemptNumber: 1, problemNumber: 1,
           gradeSystem: 'V-scale',
           gradeValue: 'V5',
           sent: false,

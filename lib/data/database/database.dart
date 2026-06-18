@@ -58,7 +58,7 @@ class SessionsDao extends DatabaseAccessor<AppDatabase> with _$SessionsDaoMixin 
       (delete(sessions)..where((s) => s.id.equals(id))).go();
 }
 
-@DriftAccessor(tables: [Climbs, ClimbTags])
+@DriftAccessor(tables: [Climbs, ClimbTags, ProjectClimbs, Projects])
 class ClimbsDao extends DatabaseAccessor<AppDatabase> with _$ClimbsDaoMixin {
   ClimbsDao(super.attachedDatabase);
 
@@ -81,6 +81,15 @@ class ClimbsDao extends DatabaseAccessor<AppDatabase> with _$ClimbsDaoMixin {
     ])
       ..where(climbTags.climbId.equals(climbId));
     return query.map((row) => row.readTable(tags)).get();
+  }
+
+  /// Returns projects attached to [climbId] via the ProjectClimbs join table.
+  Future<List<Project>> getProjectsForClimb(int climbId) {
+    final query = select(projectClimbs).join([
+      innerJoin(projects, projects.id.equalsExp(projectClimbs.projectId)),
+    ])
+      ..where(projectClimbs.climbId.equals(climbId));
+    return query.map((row) => row.readTable(projects)).get();
   }
 
   Future<int> insertClimb(ClimbsCompanion climb) =>
@@ -165,7 +174,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.fromConnection(super.connection);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -182,6 +191,15 @@ class AppDatabase extends _$AppDatabase {
               TagsCompanion.insert(name: 'slab'),
             ]);
           });
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(climbs, climbs.attemptNumber);
+            await m.addColumn(climbs, climbs.problemNumber);
+          }
+          if (from < 3) {
+            await m.addColumn(climbs, climbs.completionPercent);
+          }
         },
       );
 }

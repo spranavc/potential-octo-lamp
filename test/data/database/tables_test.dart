@@ -108,7 +108,7 @@ void main() {
         gradeSystem: 'V-scale',
         gradeValue: 'V5',
         sent: true,
-        attempts: Value(2),
+        attemptNumber: Value(2),
         loggedAt: DateTime.now(),
       ));
       await db.climbsDao.insertClimb(ClimbsCompanion.insert(
@@ -116,7 +116,7 @@ void main() {
         gradeSystem: 'V-scale',
         gradeValue: 'V3',
         sent: false,
-        attempts: Value(1),
+        attemptNumber: Value(1),
         loggedAt: DateTime.now(),
       ));
 

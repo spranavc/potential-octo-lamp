@@ -9,17 +9,25 @@ class LoggedClimb {
     required this.gradeSystem,
     required this.gradeValue,
     required this.sent,
-    required this.attempts,
+    required this.attemptNumber,
+    required this.problemNumber,
     required this.rpe,
     required this.tagIds,
+    this.completionPercent,
+    this.notes,
+    this.projectIds = const [],
   });
 
   final String gradeSystem;
   final String gradeValue;
   final bool sent;
-  final int attempts;
+  final int attemptNumber;
+  final int problemNumber;
   final double? rpe;
+  final int? completionPercent;
+  final String? notes;
   final List<int> tagIds;
+  final List<int> projectIds;
 }
 
 /// State of the active logging session.
@@ -31,6 +39,9 @@ class ActiveSessionState {
     this.startedAt,
     this.climbs = const [],
     this.isActive = false,
+    this.selectedProjectIds = const [],
+    this.currentProblemNumber = 1,
+    this.currentAttemptNumber = 1,
   });
 
   final int? sessionId;
@@ -39,10 +50,21 @@ class ActiveSessionState {
   final DateTime? startedAt;
   final List<LoggedClimb> climbs;
   final bool isActive;
+  final List<int> selectedProjectIds;
+  final int currentProblemNumber;
+  final int currentAttemptNumber;
 
   int get sendCount => climbs.where((c) => c.sent).length;
   int get failCount => climbs.where((c) => !c.sent).length;
   int get totalCount => climbs.length;
+
+  int get problemCount {
+    final problems = <int>{};
+    for (final c in climbs) {
+      problems.add(c.problemNumber);
+    }
+    return problems.length;
+  }
 
   ActiveSessionState copyWith({
     int? sessionId,
@@ -51,6 +73,10 @@ class ActiveSessionState {
     DateTime? startedAt,
     List<LoggedClimb>? climbs,
     bool? isActive,
+    List<int>? selectedProjectIds,
+    bool clearProject = false,
+    int? currentProblemNumber,
+    int? currentAttemptNumber,
   }) {
     return ActiveSessionState(
       sessionId: sessionId ?? this.sessionId,
@@ -59,6 +85,10 @@ class ActiveSessionState {
       startedAt: startedAt ?? this.startedAt,
       climbs: climbs ?? this.climbs,
       isActive: isActive ?? this.isActive,
+      selectedProjectIds:
+          clearProject ? [] : (selectedProjectIds ?? this.selectedProjectIds),
+      currentProblemNumber: currentProblemNumber ?? this.currentProblemNumber,
+      currentAttemptNumber: currentAttemptNumber ?? this.currentAttemptNumber,
     );
   }
 }
@@ -86,41 +116,90 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
     );
   }
 
-  /// Logs a climb and immediately persists it to the database.
-  Future<void> logClimb({
+  /// Logs a single attempt and persists it immediately.
+  Future<void> logAttempt({
     required String gradeSystem,
     required String gradeValue,
     required bool sent,
-    int attempts = 1,
     double? rpe,
+    int? completionPercent,
+    String? notes,
     List<int>? tagIds,
   }) async {
     if (!state.isActive || state.sessionId == null) return;
 
-    // Persist immediately so climbs are never lost
+    final projectIds = state.selectedProjectIds.isEmpty ? null : state.selectedProjectIds;
+
     await _sessionService.logClimb(
       sessionId: state.sessionId!,
       gradeSystem: gradeSystem,
       gradeValue: gradeValue,
       sent: sent,
-      attempts: attempts,
+      attemptNumber: state.currentAttemptNumber,
+      problemNumber: state.currentProblemNumber,
       rpe: rpe,
+      completionPercent: completionPercent,
+      notes: notes,
       tagIds: tagIds,
+      projectIds: projectIds,
     );
 
-    // Update in-memory state for the live counter
     final climb = LoggedClimb(
       gradeSystem: gradeSystem,
       gradeValue: gradeValue,
       sent: sent,
-      attempts: attempts,
+      attemptNumber: state.currentAttemptNumber,
+      problemNumber: state.currentProblemNumber,
       rpe: rpe,
+      completionPercent: completionPercent,
+      notes: notes,
       tagIds: tagIds ?? [],
+      projectIds: projectIds ?? [],
     );
 
     state = state.copyWith(
       climbs: [...state.climbs, climb],
     );
+  }
+
+  /// Advance to the next attempt on the same problem.
+  void nextAttempt() {
+    state = state.copyWith(
+      currentAttemptNumber: state.currentAttemptNumber + 1,
+    );
+  }
+
+  /// Move to the next problem (resets attempts, increments problem).
+  void nextProblem() {
+    state = state.copyWith(
+      currentProblemNumber: state.currentProblemNumber + 1,
+      currentAttemptNumber: 1,
+    );
+  }
+
+  /// Resume the same problem (after a send, user wants to keep trying).
+  void resumeProblem() {
+    state = state.copyWith(
+      currentAttemptNumber: state.currentAttemptNumber + 1,
+    );
+  }
+
+  void toggleProject(int projectId) {
+    final current = List<int>.from(state.selectedProjectIds);
+    if (current.contains(projectId)) {
+      current.remove(projectId);
+    } else {
+      current.add(projectId);
+    }
+    state = state.copyWith(selectedProjectIds: current);
+  }
+
+  void clearProjects() {
+    state = state.copyWith(clearProject: true);
+  }
+
+  void setProjects(List<int> projectIds) {
+    state = state.copyWith(selectedProjectIds: projectIds);
   }
 
   Future<void> end() async {
@@ -131,7 +210,11 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
     state = const ActiveSessionState();
   }
 
-  void cancel() {
+  Future<void> cancel() async {
+    final sessionId = state.sessionId;
+    if (sessionId != null) {
+      await _sessionService.deleteSession(sessionId);
+    }
     state = const ActiveSessionState();
   }
 }
