@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../features/session_log/screens/session_log_home.dart';
+import '../../features/session_log/screens/active_session_screen.dart';
+import '../../features/session_log/screens/session_summary_screen.dart';
 import '../../features/analytics/screens/analytics_dashboard.dart';
 import '../../features/gyms/screens/gyms_list_screen.dart';
 import '../../features/projects/screens/projects_list_screen.dart';
@@ -22,6 +24,18 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/session-log',
                 name: 'session-log',
                 builder: (context, state) => const SessionLogHome(),
+                routes: [
+                  GoRoute(
+                    path: 'active',
+                    name: 'session-active',
+                    builder: (context, state) => const ActiveSessionScreen(),
+                  ),
+                  GoRoute(
+                    path: 'summary',
+                    name: 'session-summary',
+                    builder: (context, state) => const SessionSummaryScreen(),
+                  ),
+                ],
               ),
             ],
           ),

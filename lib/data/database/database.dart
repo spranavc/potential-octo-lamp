@@ -1,11 +1,7 @@
-import 'dart:io';
-
 import 'package:drift/drift.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
-import 'package:drift/native.dart';
 
 import 'tables.dart';
+import 'connection.dart';
 
 part 'database.g.dart';
 
@@ -150,8 +146,8 @@ class ProjectsDao extends DatabaseAccessor<AppDatabase> with _$ProjectsDaoMixin 
   ],
 )
 class AppDatabase extends _$AppDatabase {
-  /// Creates the production database backed by a file on disk.
-  AppDatabase() : super(_openConnection());
+  /// Creates the production database. Platform is chosen automatically.
+  AppDatabase() : super(createConnection());
 
   /// Creates a database backed by [connection] — useful for in-memory tests.
   AppDatabase.fromConnection(super.connection);
@@ -176,13 +172,4 @@ class AppDatabase extends _$AppDatabase {
           });
         },
       );
-}
-
-LazyDatabase _openConnection() {
-  return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final path = p.join(dbFolder.path, 'climbapp.sqlite');
-
-    return NativeDatabase.createInBackground(File(path));
-  });
 }
