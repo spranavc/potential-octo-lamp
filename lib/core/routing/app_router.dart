@@ -16,6 +16,8 @@ import '../../features/settings/screens/settings_screen.dart';
 import '../../features/profile/screens/login_screen.dart';
 import '../../features/profile/screens/signup_screen.dart';
 import '../../features/profile/screens/email_verification_screen.dart';
+import '../../features/profile/screens/forgot_password_screen.dart';
+import '../../features/profile/screens/profile_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
@@ -25,13 +27,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         final session = Supabase.instance.client.auth.currentSession;
         final isAuthRoute = state.matchedLocation == '/login' ||
             state.matchedLocation == '/signup' ||
-            state.matchedLocation.startsWith('/verify-email');
+            state.matchedLocation.startsWith('/verify-email') ||
+            state.matchedLocation.startsWith('/forgot-password');
 
         if (session == null && !isAuthRoute) return '/login';
         if (session != null && isAuthRoute) return '/session-log';
         return null;
       } catch (_) {
-        // Supabase not initialized yet — allow all navigation
         return null;
       }
     },
@@ -53,6 +55,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final email = state.pathParameters['email']!;
           return EmailVerificationScreen(email: email);
         },
+      ),
+      GoRoute(
+        path: '/forgot-password',
+        name: 'forgot-password',
+        builder: (context, state) => const ForgotPasswordScreen(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
@@ -134,9 +141,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           StatefulShellBranch(
             routes: [
               GoRoute(
-                path: '/settings',
-                name: 'settings',
-                builder: (context, state) => const SettingsScreen(),
+                path: '/profile',
+                name: 'profile',
+                builder: (context, state) => const ProfileScreen(),
+                routes: [
+                  GoRoute(
+                    path: 'settings',
+                    name: 'profile-settings',
+                    builder: (context, state) => const SettingsScreen(),
+                  ),
+                ],
               ),
             ],
           ),
@@ -175,9 +189,9 @@ class ScaffoldWithNav extends StatelessWidget {
             label: 'Gyms',
           ),
           NavigationDestination(
-            icon: Icon(Icons.settings_outlined),
-            selectedIcon: Icon(Icons.settings),
-            label: 'Settings',
+            icon: Icon(Icons.person_outline),
+            selectedIcon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
       ),

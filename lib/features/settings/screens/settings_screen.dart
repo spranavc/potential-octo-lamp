@@ -32,7 +32,16 @@ class SettingsScreen extends StatelessWidget {
                 applicationName: 'ClimbApp',
                 applicationVersion: '1.0.0',
                 children: [
-                  const Text('Track your climbs. Discover your style. Get better.'),
+                  const Padding(
+                    padding: EdgeInsets.only(bottom: 12),
+                    child: Text('Track your climbs. Discover your style. Get better.'),
+                  ),
+                  Text(
+                    '© 2026 spranavc. MIT License.',
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey,
+                        ),
+                  ),
                 ],
               );
             },

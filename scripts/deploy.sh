@@ -1,13 +1,20 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-VERSION="${1:-0.0.1}"
 LOG_DIR="$HOME/climbapp-logs"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/deploy-$(date +%Y%m%d-%H%M%S).log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
-echo "=== Deploy v$VERSION  $(date) ==="
+echo "=== Deploy  $(date) ==="
+
+# Commit any uncommitted changes on main before deploying
+if ! git diff --quiet || ! git diff --cached --quiet; then
+  echo "=> Committing pending changes"
+  git add -A
+  git commit -m "chore: checkpoint before deploy ($(date +%Y-%m-%d))" || true
+  git push origin main || echo "warning: push to main failed, continuing"
+fi
 
 echo "=> Build"
 dart run build_runner build
@@ -33,7 +40,7 @@ cp index.html 404.html 2>/dev/null || true
 rm -rf "$TMP"
 
 git add .
-git commit -m "v$VERSION ($(date +%Y-%m-%d))" || true
+git commit -m "deploy $(date +%Y-%m-%d-%H%M)" || true
 git push origin gh-pages --force
 
 echo "=> Back to main"

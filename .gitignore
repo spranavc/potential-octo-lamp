@@ -38,7 +38,7 @@ ios/Flutter/Flutter.podspec
 
 # Generated files
 lib/data/database/database.g.dart
-windows/flutter/
+windows/flutter/ephemeral/
 
 # OS
 .DS_Store
