@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../../data/database/database.dart';
 import '../../../data/providers/repository_providers.dart';
@@ -29,6 +30,7 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
     if (result == null) return;
 
     final repo = ref.read(climbRepositoryProvider);
+    final userId = Supabase.instance.client.auth.currentUser?.id;
     await repo.log(
       sessionId: widget.sessionId,
       gradeSystem: result.gradeSystem,
@@ -38,6 +40,62 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
       problemNumber: 1,
       rpe: result.rpe,
       tagIds: result.tagIds.isNotEmpty ? result.tagIds : null,
+      userId: userId,
+    );
+    ref.invalidate(sessionClimbsProvider(widget.sessionId));
+  }
+
+  Future<bool> _showDeleteClimbConfirmation(Climb climb) async {
+    return await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            title: const Text('Delete Climb'),
+            content: Text(
+                'Delete this ${climb.sent ? 'SEND' : 'FAIL'} '
+                '(${climb.gradeSystem} ${climb.gradeValue})? This cannot be undone.'),
+            actions: [
+              TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('Cancel')),
+              FilledButton(
+                onPressed: () => Navigator.pop(ctx, true),
+                style: FilledButton.styleFrom(backgroundColor: Colors.red),
+                child: const Text('Delete'),
+              ),
+            ],
+          ),
+        ) ??
+        false;
+  }
+
+  Future<void> _deleteClimb(int climbId) async {
+    final repo = ref.read(climbRepositoryProvider);
+    await repo.delete(climbId);
+    ref.invalidate(sessionClimbsProvider(widget.sessionId));
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Climb deleted')),
+      );
+    }
+  }
+
+  Future<void> _editClimb(Climb climb) async {
+    final result = await showDialog<_EditClimbResult>(
+      context: context,
+      builder: (ctx) => _EditClimbDialog(climb: climb),
+    );
+    if (result == null) return;
+
+    final repo = ref.read(climbRepositoryProvider);
+    await repo.update(
+      climb.id,
+      sent: result.sent,
+      attemptNumber: result.attempts,
+      rpe: result.rpe,
+      completionPercent: result.completionPercent,
+      notes: result.notes,
+      gradeSystem: result.gradeSystem,
+      gradeValue: result.gradeValue,
     );
     ref.invalidate(sessionClimbsProvider(widget.sessionId));
   }
@@ -103,7 +161,28 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
                   itemCount: climbs.length,
                   itemBuilder: (context, index) {
                     final entry = climbs[index];
-                    return _ClimbCard(entry: entry);
+                    return Dismissible(
+                      key: Key('climb-${entry.climb.id}'),
+                      direction: DismissDirection.endToStart,
+                      background: Container(
+                        alignment: Alignment.centerRight,
+                        padding: const EdgeInsets.only(right: 20),
+                        margin: const EdgeInsets.only(bottom: 8),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.delete, color: Colors.white),
+                      ),
+                      confirmDismiss: (_) async {
+                        return await _showDeleteClimbConfirmation(entry.climb);
+                      },
+                      onDismissed: (_) => _deleteClimb(entry.climb.id),
+                      child: _ClimbCard(
+                        entry: entry,
+                        onTap: () => _editClimb(entry.climb),
+                      ),
+                    );
                   },
                 ),
               ),
@@ -151,9 +230,10 @@ class _Stat extends StatelessWidget {
 }
 
 class _ClimbCard extends StatelessWidget {
-  const _ClimbCard({required this.entry});
+  const _ClimbCard({required this.entry, this.onTap});
 
   final ClimbWithTags entry;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
@@ -170,7 +250,10 @@ class _ClimbCard extends StatelessWidget {
           width: 2,
         ),
       ),
-      child: Padding(
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,7 +355,8 @@ class _ClimbCard extends StatelessWidget {
             ],
           ],
         ),
-      ),
+        ),
+        ),
     );
   }
 
@@ -412,6 +496,180 @@ class _RetroClimbDialogState extends State<_RetroClimbDialog> {
                     icon: const Icon(Icons.check),
                     label: const Text('Send'),
                   ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ── Edit Climb Dialog ──────────────────────────────────────────────────────
+
+class _EditClimbResult {
+  const _EditClimbResult({
+    required this.gradeSystem,
+    required this.gradeValue,
+    required this.sent,
+    required this.attempts,
+    required this.rpe,
+    required this.completionPercent,
+    required this.notes,
+  });
+
+  final String gradeSystem;
+  final String gradeValue;
+  final bool sent;
+  final int attempts;
+  final double? rpe;
+  final int? completionPercent;
+  final String? notes;
+}
+
+class _EditClimbDialog extends StatefulWidget {
+  const _EditClimbDialog({required this.climb});
+
+  final Climb climb;
+
+  @override
+  State<_EditClimbDialog> createState() => _EditClimbDialogState();
+}
+
+class _EditClimbDialogState extends State<_EditClimbDialog> {
+  late String _gradeSystem;
+  late String _gradeValue;
+  late bool _sent;
+  late int _attempts;
+  late double? _rpe;
+  late int? _completionPercent;
+  late TextEditingController _notesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _gradeSystem = widget.climb.gradeSystem;
+    _gradeValue = widget.climb.gradeValue;
+    _sent = widget.climb.sent;
+    _attempts = widget.climb.attemptNumber;
+    _rpe = widget.climb.rpe;
+    _completionPercent = widget.climb.completionPercent;
+    _notesController = TextEditingController(text: widget.climb.notes ?? '');
+  }
+
+  @override
+  void dispose() {
+    _notesController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Edit Climb'),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // Grade
+            ListTile(
+              title: Text('$_gradeSystem $_gradeValue'),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () {
+                GradePicker.show(
+                  context,
+                  onSelected: (system, value) {
+                    setState(() {
+                      _gradeSystem = system;
+                      _gradeValue = value;
+                    });
+                  },
+                  initialSystem: _gradeSystem,
+                  initialValue: _gradeValue,
+                );
+              },
+            ),
+
+            // Send / Fail toggle
+            SwitchListTile(
+              title: Text(_sent ? 'SEND' : 'FAIL'),
+              subtitle: const Text('Tap to toggle'),
+              value: _sent,
+              activeColor: Colors.green,
+              inactiveTrackColor: Colors.red.shade200,
+              onChanged: (v) => setState(() => _sent = v),
+            ),
+
+            // Attempts
+            AttemptsCounter(
+              value: _attempts,
+              onChanged: (v) => setState(() => _attempts = v),
+            ),
+
+            // RPE
+            RpeSlider(
+              value: _rpe,
+              onChanged: (v) => setState(() => _rpe = v),
+            ),
+
+            // Completion %
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                const Text('Completion:'),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Slider(
+                    value: _completionPercent?.toDouble() ?? 100,
+                    min: 0,
+                    max: 100,
+                    divisions: 20,
+                    label: '${_completionPercent ?? 100}%',
+                    onChanged: (v) => setState(() => _completionPercent = v.round()),
+                  ),
+                ),
+                Text('${_completionPercent ?? 100}%',
+                    style: const TextStyle(fontWeight: FontWeight.bold)),
+              ],
+            ),
+
+            // Notes
+            const SizedBox(height: 12),
+            TextField(
+              controller: _notesController,
+              decoration: const InputDecoration(
+                labelText: 'Notes',
+                border: OutlineInputBorder(),
+              ),
+              maxLines: 2,
+            ),
+
+            const SizedBox(height: 12),
+
+            // Save / Cancel
+            Row(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                TextButton(
+                  onPressed: () => Navigator.pop(context),
+                  child: const Text('Cancel'),
+                ),
+                const SizedBox(width: 8),
+                FilledButton(
+                  onPressed: () => Navigator.pop(context, _EditClimbResult(
+                    gradeSystem: _gradeSystem,
+                    gradeValue: _gradeValue,
+                    sent: _sent,
+                    attempts: _attempts,
+                    rpe: _rpe,
+                    completionPercent: _completionPercent,
+                    notes: _notesController.text.trim().isEmpty
+                        ? null
+                        : _notesController.text.trim(),
+                  )),
+                  child: const Text('Save'),
                 ),
               ],
             ),

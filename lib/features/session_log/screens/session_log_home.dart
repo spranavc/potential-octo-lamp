@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../../data/database/database.dart';
+import '../../../data/providers/repository_providers.dart';
 import '../../../shared/utils/time_format.dart';
+import '../../gyms/providers/gym_providers.dart';
 import '../providers/session_list_provider.dart';
 import '../providers/active_session_provider.dart';
 
@@ -45,7 +47,23 @@ class SessionLogHome extends ConsumerWidget {
             itemCount: sessions.length,
             itemBuilder: (context, index) {
               final session = sessions[index];
-              return _SessionCard(session: session);
+              return Dismissible(
+                key: Key('session-${session.id}'),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                confirmDismiss: (_) => _confirmDeleteSession(context, ref, session),
+                onDismissed: (_) => _deleteSession(ref, session),
+                child: _SessionCard(session: session),
+              );
             },
           );
         },
@@ -62,6 +80,33 @@ class SessionLogHome extends ConsumerWidget {
             ),
     );
   }
+}
+
+Future<bool> _confirmDeleteSession(BuildContext context, WidgetRef ref, Session session) async {
+  final date = formatDateFull(session.startedAt);
+  return await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Delete Session'),
+          content: Text('Delete session from $date and all its climbs? This cannot be undone.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
+      ) ??
+      false;
+}
+
+Future<void> _deleteSession(WidgetRef ref, Session session) async {
+  final repo = ref.read(sessionRepositoryProvider);
+  await repo.delete(session.id);
+  ref.invalidate(sessionListProvider);
+  ref.invalidate(gymSessionsProvider(session.gymId));
 }
 
 class _EmptyState extends StatelessWidget {

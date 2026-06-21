@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
+import '../../../data/database/database.dart';
 import '../../../data/providers/repository_providers.dart';
 import '../../gyms/providers/gym_providers.dart';
 import '../providers/project_providers.dart';
@@ -58,9 +59,25 @@ class ProjectsListScreen extends ConsumerWidget {
             itemCount: projects.length,
             itemBuilder: (context, index) {
               final project = projects[index];
-              return ProjectCard(
-                project: project,
-                onTap: () => context.go('/session-log/projects/${project.id}'),
+              return Dismissible(
+                key: Key('project-${project.id}'),
+                direction: DismissDirection.endToStart,
+                background: Container(
+                  alignment: Alignment.centerRight,
+                  padding: const EdgeInsets.only(right: 20),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.red,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.delete, color: Colors.white),
+                ),
+                confirmDismiss: (_) => _confirmDeleteProject(context, ref, project),
+                onDismissed: (_) => _deleteProject(ref, project),
+                child: ProjectCard(
+                  project: project,
+                  onTap: () => context.go('/session-log/projects/${project.id}'),
+                ),
               );
             },
           );
@@ -76,6 +93,33 @@ class ProjectsListScreen extends ConsumerWidget {
       ),
     );
   }
+}
+
+Future<bool> _confirmDeleteProject(BuildContext context, WidgetRef ref, Project project) async {
+  return await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Delete Project'),
+          content: Text(
+              'Delete "${project.name}" '
+              '(${project.gradeSystem} ${project.gradeValue})? All linked climbs will be unlinked. This cannot be undone.'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              style: FilledButton.styleFrom(backgroundColor: Colors.red),
+              child: const Text('Delete'),
+            ),
+          ],
+        ),
+      ) ??
+      false;
+}
+
+Future<void> _deleteProject(WidgetRef ref, Project project) async {
+  final repo = ref.read(projectRepositoryProvider);
+  await repo.delete(project.id);
+  ref.invalidate(projectListProvider);
 }
 
 class _AddProjectResult {

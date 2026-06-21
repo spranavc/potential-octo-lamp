@@ -156,6 +156,20 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     ref.read(activeSessionProvider.notifier).nextAttempt();
   }
 
+  void _skipToNextProblem() {
+    if (!mounted) return;
+    ref.read(activeSessionProvider.notifier).nextProblem();
+    _resetTags();
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          'Skipped to Problem #${ref.read(activeSessionProvider).currentProblemNumber}',
+        ),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
+
   void _resetTags() {
     setState(() {
       _selectedTagIds = [];
@@ -434,6 +448,18 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
                         ),
                         onChanged: (v) => _climbNotes = v,
                         controller: TextEditingController(text: _climbNotes),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      // Skip to next problem
+                      OutlinedButton.icon(
+                        onPressed: _skipToNextProblem,
+                        icon: const Icon(Icons.skip_next),
+                        label: const Text('Skip to Next Problem'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.grey[600],
+                        ),
                       ),
                     ],
                   ),

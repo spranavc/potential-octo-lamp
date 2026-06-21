@@ -121,6 +121,31 @@ class ClimbsDao extends DatabaseAccessor<AppDatabase> with _$ClimbsDaoMixin {
     return into(climbs).insert(c);
   }
 
+  Future<void> updateClimb(int id, {
+    bool? sent,
+    int? attemptNumber,
+    int? problemNumber,
+    double? rpe,
+    int? completionPercent,
+    String? notes,
+    String? gradeSystem,
+    String? gradeValue,
+    DateTime? loggedAt,
+  }) =>
+      (update(climbs)..where((c) => c.id.equals(id))).write(
+        ClimbsCompanion(
+          sent: sent == null ? const Value.absent() : Value(sent),
+          attemptNumber: attemptNumber == null ? const Value.absent() : Value(attemptNumber),
+          problemNumber: problemNumber == null ? const Value.absent() : Value(problemNumber),
+          rpe: rpe == null ? const Value.absent() : Value(rpe),
+          completionPercent: completionPercent == null ? const Value.absent() : Value(completionPercent),
+          notes: notes == null ? const Value.absent() : Value(notes.trim()),
+          gradeSystem: gradeSystem == null ? const Value.absent() : Value(gradeSystem.trim()),
+          gradeValue: gradeValue == null ? const Value.absent() : Value(gradeValue.trim()),
+          loggedAt: loggedAt == null ? const Value.absent() : Value(loggedAt),
+        ),
+      );
+
   Future<void> deleteById(int id) =>
       (delete(climbs)..where((c) => c.id.equals(id))).go();
 

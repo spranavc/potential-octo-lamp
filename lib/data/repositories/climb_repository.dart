@@ -89,6 +89,34 @@ class ClimbRepository {
     return climbId;
   }
 
+  Future<void> update(int id, {
+    bool? sent,
+    int? attemptNumber,
+    int? problemNumber,
+    double? rpe,
+    int? completionPercent,
+    String? notes,
+    String? gradeSystem,
+    String? gradeValue,
+    DateTime? loggedAt,
+  }) {
+    if (rpe != null && (rpe < 1 || rpe > 10)) {
+      throw ArgumentError('RPE must be between 1 and 10');
+    }
+    return db.climbsDao.updateClimb(
+      id,
+      sent: sent,
+      attemptNumber: attemptNumber,
+      problemNumber: problemNumber,
+      rpe: rpe,
+      completionPercent: completionPercent,
+      notes: notes,
+      gradeSystem: gradeSystem,
+      gradeValue: gradeValue,
+      loggedAt: loggedAt,
+    );
+  }
+
   Future<void> delete(int id) => db.climbsDao.deleteById(id);
 
   Future<int> countBySession(int sessionId) => db.climbsDao.countBySession(sessionId);
