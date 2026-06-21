@@ -17,7 +17,7 @@ VERSION="${1:-0.0.1}"
 # -----------------------------------------------------------------
 
 TEMP_DIR="$(mktemp -d)"
-DEPLOY_BRANCH="gh-pages-v${VERSION}"
+DEPLOY_BRANCH="gh-pages"
 
 echo "=> Version: $VERSION"
 echo "=> Deploy branch: $DEPLOY_BRANCH"
@@ -41,6 +41,7 @@ cp -r build/web "$TEMP_DIR/web"
 
 # ---- create fresh deploy branch (delete old one if exists) -------
 echo "=> Creating fresh $DEPLOY_BRANCH"
+git checkout main --force
 git branch -D "$DEPLOY_BRANCH" 2>/dev/null || true
 git checkout --orphan "$DEPLOY_BRANCH"
 
@@ -68,10 +69,6 @@ echo "=> Committing and pushing $DEPLOY_BRANCH"
 git add .
 git commit -m "Deploy v${VERSION} ($(date +%Y-%m-%d))" || echo "Nothing new"
 git push origin "$DEPLOY_BRANCH" --force
-
-# ---- also push to plain gh-pages so GitHub Pages works ----------
-echo "=> Also pushing to gh-pages"
-git push origin "$DEPLOY_BRANCH":gh-pages --force
 
 # ---- back to main -----------------------------------------------
 echo "=> Returning to main"
