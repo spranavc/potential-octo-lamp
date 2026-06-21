@@ -9,10 +9,15 @@ import 'data/providers/database_provider.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  await Supabase.initialize(
-    url: 'YOUR_SUPABASE_URL',
-    publishableKey: 'YOUR_ANON_KEY',
-  );
+  try {
+    await Supabase.initialize(
+      url: 'https://dwlwkpukuetycufjcdkp.supabase.co',
+      publishableKey: 'sb_publishable_RpIxDvQCktZAR6fmoaZ4TQ_moTO5sAJ',
+    );
+  } catch (e) {
+    // Supabase not configured — app runs offline
+    debugPrint('Supabase init failed: $e');
+  }
 
   AppDatabase? database;
 
