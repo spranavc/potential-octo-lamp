@@ -118,6 +118,7 @@ class GymsListScreen extends ConsumerWidget {
         error: (err, _) => Center(child: Text('Error: $err')),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'add-gym',
         onPressed: () => _addGym(context, ref),
         icon: const Icon(Icons.add),
         label: const Text('Add Gym'),

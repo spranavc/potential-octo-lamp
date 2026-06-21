@@ -55,6 +55,7 @@ class SessionLogHome extends ConsumerWidget {
       floatingActionButton: isLogging
           ? null
           : FloatingActionButton.extended(
+              heroTag: 'new-session',
               onPressed: () => context.go('/session-log/active'),
               icon: const Icon(Icons.add),
               label: const Text('New Session'),

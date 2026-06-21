@@ -54,6 +54,7 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
             error: (_, _) => const Text('Session'),
           )),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'log-climb',
         onPressed: _logRetroactiveClimb,
         icon: const Icon(Icons.add),
         label: const Text('Log Climb'),

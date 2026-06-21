@@ -66,6 +66,7 @@ class ProjectsListScreen extends ConsumerWidget {
         error: (err, _) => Center(child: Text('Error: $err')),
       ),
       floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'new-project',
         onPressed: () => _addProject(context, ref),
         icon: const Icon(Icons.add),
         label: const Text('New Project'),
