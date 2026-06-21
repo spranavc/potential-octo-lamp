@@ -21,14 +21,19 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/gyms',
     redirect: (context, state) {
-      final session = Supabase.instance.client.auth.currentSession;
-      final isAuthRoute = state.matchedLocation == '/login' ||
-          state.matchedLocation == '/signup' ||
-          state.matchedLocation.startsWith('/verify-email');
+      try {
+        final session = Supabase.instance.client.auth.currentSession;
+        final isAuthRoute = state.matchedLocation == '/login' ||
+            state.matchedLocation == '/signup' ||
+            state.matchedLocation.startsWith('/verify-email');
 
-      if (session == null && !isAuthRoute) return '/login';
-      if (session != null && isAuthRoute) return '/gyms';
-      return null;
+        if (session == null && !isAuthRoute) return '/login';
+        if (session != null && isAuthRoute) return '/gyms';
+        return null;
+      } catch (_) {
+        // Supabase not initialized yet — allow all navigation
+        return null;
+      }
     },
     routes: [
       GoRoute(
