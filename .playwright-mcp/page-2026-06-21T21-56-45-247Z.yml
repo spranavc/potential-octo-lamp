@@ -1,0 +1,14 @@
+- generic [ref=e7]:
+  - generic:
+    - generic:
+      - generic:
+        - generic:
+          - heading "Login" [active] [level=2] [ref=e8]
+          - group:
+            - generic:
+              - generic [ref=e9]:
+                - generic: Welcome Back
+              - textbox "Email" [ref=e11]
+              - textbox "Password" [ref=e13]
+              - button "Login" [ref=e14]
+              - button "Don't have an account? Sign Up" [ref=e15]

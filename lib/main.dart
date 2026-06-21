@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -10,11 +9,9 @@ import 'supabase_init.dart';
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Supabase only works on native platforms. On web, the import pulls in
-  // platform plugins that crash the JS runtime. We skip it entirely on web.
-  if (!kIsWeb) {
-    await initSupabase();
-  }
+  // Initialize Supabase on all platforms. The passkeys JS bundle in
+  // web/index.html is required by the transitive passkeys_web dependency.
+  await initSupabase();
 
   AppDatabase? database;
   try {
