@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../features/session_log/screens/session_log_home.dart';
 import '../../features/session_log/screens/active_session_screen.dart';
 import '../../features/session_log/screens/session_summary_screen.dart';
@@ -11,11 +12,47 @@ import '../../features/gyms/screens/gym_detail_screen.dart';
 import '../../features/projects/screens/projects_list_screen.dart';
 import '../../features/projects/screens/project_detail_screen.dart';
 import '../../features/settings/screens/settings_screen.dart';
+import '../../features/profile/screens/login_screen.dart';
+import '../../features/profile/screens/signup_screen.dart';
+import '../../features/profile/screens/email_verification_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/gyms',
+    redirect: (context, state) {
+      final session = Supabase.instance.client.auth.currentSession;
+      final isAuthRoute =
+          state.matchedLocation == '/login' ||
+          state.matchedLocation == '/signup' ||
+          state.matchedLocation.startsWith('/verify-email');
+
+      if (session == null && !isAuthRoute) {
+        return '/login';
+      }
+      if (session != null && isAuthRoute) {
+        return '/gyms';
+      }
+      return null;
+    },
     routes: [
+      GoRoute(
+        path: '/login',
+        name: 'login',
+        builder: (context, state) => const LoginScreen(),
+      ),
+      GoRoute(
+        path: '/signup',
+        name: 'signup',
+        builder: (context, state) => const SignUpScreen(),
+      ),
+      GoRoute(
+        path: '/verify-email/:email',
+        name: 'verify-email',
+        builder: (context, state) {
+          final email = state.pathParameters['email']!;
+          return EmailVerificationScreen(email: email);
+        },
+      ),
       StatefulShellRoute.indexedStack(
         builder: (context, state, navigationShell) {
           return ScaffoldWithNav(navigationShell: navigationShell);

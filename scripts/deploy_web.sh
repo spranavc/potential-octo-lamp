@@ -12,36 +12,42 @@ echo "Deploy started: $(date)"
 echo "Log: $LOG_FILE"
 echo "========================================="
 
-TEMP_DIR="$(mktemp -d)"
+# ---- semantic version (bump manually when you want) -------------
+VERSION="${1:-0.0.1}"
+# -----------------------------------------------------------------
 
+TEMP_DIR="$(mktemp -d)"
+DEPLOY_BRANCH="gh-pages-v${VERSION}"
+
+echo "=> Version: $VERSION"
+echo "=> Deploy branch: $DEPLOY_BRANCH"
 echo ""
+
+echo "=> Stashing any uncommitted work"
+git stash --include-untracked 2>/dev/null || true
+
 echo "=> Running setup"
 bash "$SCRIPT_DIR/setup.sh"
 
-echo ""
 echo "=> Building web"
 MSYS_NO_PATHCONV=1 flutter build web --base-href "/potential-octo-lamp/"
 
-echo ""
 echo "=> Verifying base href"
-grep "base href" build/web/index.html
+grep 'base href' build/web/index.html || echo "WARNING: no base href found"
 
-echo ""
+# ---- save build output outside the repo so it survives branch switches
 echo "=> Copying build to temp dir"
 cp -r build/web "$TEMP_DIR/web"
 
-echo ""
-echo "=> Switching to gh-pages branch"
-git checkout --orphan gh-pages 2>/dev/null || true
-git checkout gh-pages 2>/dev/null || git checkout --orphan gh-pages
+# ---- create / reuse the deploy branch ---------------------------
+echo "=> Switching to $DEPLOY_BRANCH"
+git checkout "$DEPLOY_BRANCH" 2>/dev/null || git checkout --orphan "$DEPLOY_BRANCH"
 
-echo ""
-echo "=> Cleaning gh-pages"
+echo "=> Cleaning $DEPLOY_BRANCH"
 git rm -rf --ignore-unmatch . 2>/dev/null || true
-rm -rf assets canvaskit icons .dart_tool build windows lib test docs 2>/dev/null || true
+rm -rf assets canvaskit icons .dart_tool build windows lib test scripts docs 2>/dev/null || true
 
-echo ""
-echo "=> Copying web files from temp"
+echo "=> Copying web files"
 cp "$TEMP_DIR/web/index.html" .
 cp "$TEMP_DIR/web/flutter.js" .
 cp "$TEMP_DIR/web/flutter_bootstrap.js" .
@@ -57,19 +63,31 @@ cp -r "$TEMP_DIR/web/icons" .
 cp index.html 404.html 2>/dev/null || true
 rm -rf "$TEMP_DIR"
 
-echo ""
-echo "=> Committing and pushing"
+echo "=> Committing and pushing $DEPLOY_BRANCH"
 git add .
-git commit -m "Deploy $(date +%Y-%m-%d)" || echo "Nothing new"
-git push origin gh-pages --force
+git commit -m "Deploy v${VERSION} ($(date +%Y-%m-%d))" || echo "Nothing new"
+git push origin "$DEPLOY_BRANCH" --force
 
-echo ""
+# ---- also push to plain gh-pages so GitHub Pages works ----------
+echo "=> Also pushing to gh-pages"
+git push origin "$DEPLOY_BRANCH":gh-pages --force
+
+# ---- back to main -----------------------------------------------
 echo "=> Returning to main"
 git checkout main --force
+
+# ---- restore stashed work ---------------------------------------
+git stash pop 2>/dev/null || true
+
+# ---- regenerate generated files that --force wiped --------------
+echo "=> Regenerating Drift code on main"
+dart run build_runner build 2>/dev/null || true
 
 echo ""
 echo "========================================="
 echo "Deploy finished: $(date)"
-echo "Log saved to: $LOG_FILE"
-echo "Live at: https://spranavc.github.io/potential-octo-lamp/"
+echo "Version:    $VERSION"
+echo "Branch:     $DEPLOY_BRANCH"
+echo "Live at:    https://spranavc.github.io/potential-octo-lamp/"
+echo "Log:        $LOG_FILE"
 echo "========================================="
