@@ -13,8 +13,8 @@ QueryExecutor createConnectionForPlatform() {
         );
         return result.resolvedExecutor;
       } catch (_) {
-        // WASM unavailable — fall back to IndexedDB via legacy web API
-        return WebDatabase('climbapp');
+        // WASM unavailable — fall back to IndexedDB
+        return DatabaseConnection(WebDatabase('climbapp'));
       }
     }),
   );
