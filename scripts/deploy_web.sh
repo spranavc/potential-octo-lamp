@@ -39,9 +39,10 @@ grep 'base href' build/web/index.html || echo "WARNING: no base href found"
 echo "=> Copying build to temp dir"
 cp -r build/web "$TEMP_DIR/web"
 
-# ---- create / reuse the deploy branch ---------------------------
-echo "=> Switching to $DEPLOY_BRANCH"
-git checkout "$DEPLOY_BRANCH" 2>/dev/null || git checkout --orphan "$DEPLOY_BRANCH"
+# ---- create fresh deploy branch (delete old one if exists) -------
+echo "=> Creating fresh $DEPLOY_BRANCH"
+git branch -D "$DEPLOY_BRANCH" 2>/dev/null || true
+git checkout --orphan "$DEPLOY_BRANCH"
 
 echo "=> Cleaning $DEPLOY_BRANCH"
 git rm -rf --ignore-unmatch . 2>/dev/null || true
