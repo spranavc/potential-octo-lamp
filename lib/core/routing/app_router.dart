@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -20,7 +21,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/gyms',
     redirect: (context, state) {
-      // Guard against Supabase not being initialized (e.g. offline / web)
+      // Supabase is not available on web — skip auth redirect
+      if (kIsWeb) return null;
+
       try {
         final session = Supabase.instance.client.auth.currentSession;
         final isAuthRoute =
