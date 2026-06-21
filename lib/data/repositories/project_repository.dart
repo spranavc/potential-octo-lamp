@@ -6,7 +6,7 @@ class ProjectRepository {
 
   final AppDatabase db;
 
-  Future<List<Project>> getAll() => db.projectsDao.getAll();
+  Future<List<Project>> getAll({String? userId}) => db.projectsDao.getAll(userId: userId);
   Future<Project?> getById(int id) => db.projectsDao.getById(id);
 
   Future<int> create({
@@ -15,6 +15,7 @@ class ProjectRepository {
     required String gradeSystem,
     required String gradeValue,
     String? description,
+    String? userId,
   }) {
     if (name.trim().isEmpty) {
       throw ArgumentError('Project name cannot be empty');
@@ -31,6 +32,7 @@ class ProjectRepository {
         description: Value(description?.trim()),
         startedAt: Value(DateTime.now()),
       ),
+      userId: userId,
     );
   }
 

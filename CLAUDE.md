@@ -231,10 +231,10 @@ In debug mode, Flutter shows an "Enable accessibility" overlay. Dismiss it with:
 
 ### Deploying to GitHub Pages
 URL: `https://spranavc.github.io/potential-octo-lamp/`
-Script: `bash scripts/deploy.sh [-cm "message"]` — builds, creates gh-pages branch, force-pushes.
-- The `-cm` flag sets the **gh-pages deploy commit message** only. It does NOT commit or push main.
-- Commit and push main separately BEFORE running the deploy script.
-- If you've already pushed main, omit `-cm` — the deploy commit gets a timestamp.
+Script: `bash scripts/deploy.sh -cm "commit message"` — builds, commits pending changes on main, force-pushes to gh-pages.
+- The `-cm` message is used for **both** the main checkpoint commit AND the gh-pages deploy commit.
+- If you have uncommitted changes and omit `-cm`, the script errors out.
+- If all changes are already committed, `-cm` is optional — the gh-pages commit gets a timestamp.
 Uses `--base-href "/potential-octo-lamp/"` matching the repo name.
 
 ## Supabase Config

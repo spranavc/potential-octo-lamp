@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../../data/providers/repository_providers.dart';
 import '../../../domain/services/session_service.dart';
@@ -95,10 +96,11 @@ class ActiveSessionState {
 
 /// Manages the lifecycle of an active climbing session.
 class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
-  ActiveSessionNotifier(this._sessionService)
+  ActiveSessionNotifier(this._sessionService, this._userId)
       : super(const ActiveSessionState());
 
   final SessionService _sessionService;
+  final String? _userId;
 
   Future<void> start({
     required int gymId,
@@ -106,7 +108,11 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
   }) async {
     if (state.isActive) return;
 
-    final sessionId = await _sessionService.startSession(gymId, wallId: wallId);
+    final sessionId = await _sessionService.startSession(
+      gymId,
+      wallId: wallId,
+      userId: _userId,
+    );
     state = ActiveSessionState(
       sessionId: sessionId,
       gymId: gymId,
@@ -142,6 +148,7 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
       notes: notes,
       tagIds: tagIds,
       projectIds: projectIds,
+      userId: _userId,
     );
 
     final climb = LoggedClimb(
@@ -232,8 +239,10 @@ final sessionServiceProvider = Provider<SessionService>((ref) {
 
 final activeSessionProvider =
     StateNotifierProvider<ActiveSessionNotifier, ActiveSessionState>((ref) {
+  final userId = Supabase.instance.client.auth.currentUser?.id;
   return ActiveSessionNotifier(
     ref.watch(sessionServiceProvider),
+    userId,
   );
 });
 

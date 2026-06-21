@@ -9,14 +9,14 @@ class GymRepository {
 
   // ── Gyms ──────────────────────────────────────────────────────────────────
 
-  Future<List<Gym>> getAll() => db.gymsDao.getAll();
+  Future<List<Gym>> getAll({String? userId}) => db.gymsDao.getAll(userId: userId);
   Future<Gym?> getById(int id) => db.gymsDao.getById(id);
 
-  Future<int> create(String name) {
+  Future<int> create(String name, {String? userId}) {
     if (name.trim().isEmpty) {
       throw ArgumentError('Gym name cannot be empty');
     }
-    return db.gymsDao.insertGym(name.trim());
+    return db.gymsDao.insertGym(name.trim(), userId: userId);
   }
 
   Future<void> updateName(int id, String name) {

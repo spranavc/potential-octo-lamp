@@ -13,13 +13,19 @@ part 'database.g.dart';
 class GymsDao extends DatabaseAccessor<AppDatabase> with _$GymsDaoMixin {
   GymsDao(super.attachedDatabase);
 
-  Future<List<Gym>> getAll() => select(gyms).get();
+  Future<List<Gym>> getAll({String? userId}) {
+    if (userId == null) return select(gyms).get();
+    return (select(gyms)..where((g) => g.userId.equals(userId))).get();
+  }
 
   Future<Gym?> getById(int id) =>
       (select(gyms)..where((g) => g.id.equals(id))).getSingleOrNull();
 
-  Future<int> insertGym(String name) =>
-      into(gyms).insert(GymsCompanion.insert(name: name));
+  Future<int> insertGym(String name, {String? userId}) =>
+      into(gyms).insert(GymsCompanion.insert(
+        name: name,
+        userId: Value(userId),
+      ));
 
   Future<void> updateName(int id, String name) =>
       (update(gyms)..where((g) => g.id.equals(id))).write(
@@ -34,20 +40,31 @@ class GymsDao extends DatabaseAccessor<AppDatabase> with _$GymsDaoMixin {
 class SessionsDao extends DatabaseAccessor<AppDatabase> with _$SessionsDaoMixin {
   SessionsDao(super.attachedDatabase);
 
-  Future<List<Session>> getAll() =>
-      (select(sessions)..orderBy([(s) => OrderingTerm.desc(s.startedAt)])).get();
+  Future<List<Session>> getAll({String? userId}) {
+    if (userId == null) return (select(sessions)..orderBy([(s) => OrderingTerm.desc(s.startedAt)])).get();
+    return (select(sessions)
+          ..where((s) => s.userId.equals(userId))
+          ..orderBy([(s) => OrderingTerm.desc(s.startedAt)]))
+        .get();
+  }
 
   Future<Session?> getById(int id) =>
       (select(sessions)..where((s) => s.id.equals(id))).getSingleOrNull();
 
-  Future<List<Session>> getByGymId(int gymId) =>
-      (select(sessions)
-            ..where((s) => s.gymId.equals(gymId))
-            ..orderBy([(s) => OrderingTerm.desc(s.startedAt)]))
-          .get();
+  Future<List<Session>> getByGymId(int gymId, {String? userId}) {
+    var q = select(sessions)..where((s) => s.gymId.equals(gymId));
+    if (userId != null) {
+      q = (q..where((s) => s.userId.equals(userId)));
+    }
+    return (q..orderBy([(s) => OrderingTerm.desc(s.startedAt)])).get();
+  }
 
-  Future<int> startSession(SessionsCompanion session) =>
-      into(sessions).insert(session);
+  Future<int> startSession(SessionsCompanion session, {String? userId}) {
+    final s = userId != null
+        ? session.copyWith(userId: Value(userId))
+        : session;
+    return into(sessions).insert(s);
+  }
 
   Future<void> endSession(int id, DateTime endedAt) =>
       (update(sessions)..where((s) => s.id.equals(id))).write(
@@ -68,8 +85,13 @@ class ClimbsDao extends DatabaseAccessor<AppDatabase> with _$ClimbsDaoMixin {
             ..orderBy([(c) => OrderingTerm.asc(c.loggedAt)]))
           .get();
 
-  Future<List<Climb>> getAll() =>
-      (select(climbs)..orderBy([(c) => OrderingTerm.asc(c.loggedAt)])).get();
+  Future<List<Climb>> getAll({String? userId}) {
+    if (userId == null) return (select(climbs)..orderBy([(c) => OrderingTerm.asc(c.loggedAt)])).get();
+    return (select(climbs)
+          ..where((c) => c.userId.equals(userId))
+          ..orderBy([(c) => OrderingTerm.asc(c.loggedAt)]))
+        .get();
+  }
 
   Future<Climb?> getById(int id) =>
       (select(climbs)..where((c) => c.id.equals(id))).getSingleOrNull();
@@ -92,8 +114,12 @@ class ClimbsDao extends DatabaseAccessor<AppDatabase> with _$ClimbsDaoMixin {
     return query.map((row) => row.readTable(projects)).get();
   }
 
-  Future<int> insertClimb(ClimbsCompanion climb) =>
-      into(climbs).insert(climb);
+  Future<int> insertClimb(ClimbsCompanion climb, {String? userId}) {
+    final c = userId != null
+        ? climb.copyWith(userId: Value(userId))
+        : climb;
+    return into(climbs).insert(c);
+  }
 
   Future<void> deleteById(int id) =>
       (delete(climbs)..where((c) => c.id.equals(id))).go();
@@ -124,14 +150,23 @@ class TagsDao extends DatabaseAccessor<AppDatabase> with _$TagsDaoMixin {
 class ProjectsDao extends DatabaseAccessor<AppDatabase> with _$ProjectsDaoMixin {
   ProjectsDao(super.attachedDatabase);
 
-  Future<List<Project>> getAll() =>
-      (select(projects)..orderBy([(p) => OrderingTerm.desc(p.createdAt)])).get();
+  Future<List<Project>> getAll({String? userId}) {
+    if (userId == null) return (select(projects)..orderBy([(p) => OrderingTerm.desc(p.createdAt)])).get();
+    return (select(projects)
+          ..where((p) => p.userId.equals(userId))
+          ..orderBy([(p) => OrderingTerm.desc(p.createdAt)]))
+        .get();
+  }
 
   Future<Project?> getById(int id) =>
       (select(projects)..where((p) => p.id.equals(id))).getSingleOrNull();
 
-  Future<int> insertProject(ProjectsCompanion project) =>
-      into(projects).insert(project);
+  Future<int> insertProject(ProjectsCompanion project, {String? userId}) {
+    final p = userId != null
+        ? project.copyWith(userId: Value(userId))
+        : project;
+    return into(projects).insert(p);
+  }
 
   Future<void> updateStatus(int id, String status) =>
       (update(projects)..where((p) => p.id.equals(id))).write(
@@ -174,7 +209,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.fromConnection(super.connection);
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -199,6 +234,16 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 3) {
             await m.addColumn(climbs, climbs.completionPercent);
+          }
+          if (from < 4) {
+            await m.addColumn(gyms, gyms.userId);
+            await m.addColumn(gyms, gyms.updatedAt);
+            await m.addColumn(sessions, sessions.userId);
+            await m.addColumn(sessions, sessions.updatedAt);
+            await m.addColumn(climbs, climbs.userId);
+            await m.addColumn(climbs, climbs.updatedAt);
+            await m.addColumn(projects, projects.userId);
+            await m.addColumn(projects, projects.updatedAt);
           }
         },
       );

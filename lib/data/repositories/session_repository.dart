@@ -6,11 +6,12 @@ class SessionRepository {
 
   final AppDatabase db;
 
-  Future<List<Session>> getAll() => db.sessionsDao.getAll();
+  Future<List<Session>> getAll({String? userId}) => db.sessionsDao.getAll(userId: userId);
   Future<Session?> getById(int id) => db.sessionsDao.getById(id);
-  Future<List<Session>> getByGymId(int gymId) => db.sessionsDao.getByGymId(gymId);
+  Future<List<Session>> getByGymId(int gymId, {String? userId}) =>
+      db.sessionsDao.getByGymId(gymId, userId: userId);
 
-  Future<int> start(int gymId, {DateTime? startedAt, int? wallId}) {
+  Future<int> start(int gymId, {DateTime? startedAt, int? wallId, String? userId}) {
     if (gymId <= 0) {
       throw ArgumentError('Invalid gym ID');
     }
@@ -20,6 +21,7 @@ class SessionRepository {
         wallId: Value(wallId),
         startedAt: startedAt ?? DateTime.now(),
       ),
+      userId: userId,
     );
   }
 

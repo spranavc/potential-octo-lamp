@@ -9,8 +9,8 @@ class SessionService {
   final ClimbRepository climbRepo;
 
   /// Start a new climbing session.
-  Future<int> startSession(int gymId, {int? wallId}) {
-    return sessionRepo.start(gymId, wallId: wallId);
+  Future<int> startSession(int gymId, {int? wallId, String? userId}) {
+    return sessionRepo.start(gymId, wallId: wallId, userId: userId);
   }
 
   /// End an active session.
@@ -36,6 +36,7 @@ class SessionService {
     String? notes,
     List<int>? tagIds,
     List<int>? projectIds,
+    String? userId,
   }) {
     return climbRepo.log(
       sessionId: sessionId,
@@ -49,6 +50,7 @@ class SessionService {
       notes: notes,
       tagIds: tagIds,
       projectIds: projectIds,
+      userId: userId,
     );
   }
 

@@ -5,6 +5,8 @@ import 'package:drift/drift.dart';
 class Gyms extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
+  TextColumn get userId => text().nullable()();  // Supabase auth.uid()
+  DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
@@ -40,6 +42,8 @@ class Sessions extends Table {
   DateTimeColumn get startedAt => dateTime()();
   DateTimeColumn get endedAt => dateTime().nullable()();
   TextColumn get notes => text().nullable()();
+  TextColumn get userId => text().nullable()();  // Supabase auth.uid()
+  DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
@@ -60,6 +64,8 @@ class Climbs extends Table {
   IntColumn get completionPercent => integer().nullable()();
   TextColumn get notes => text().nullable()();
   DateTimeColumn get loggedAt => dateTime()();
+  TextColumn get userId => text().nullable()();  // Supabase auth.uid()
+  DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 
@@ -93,6 +99,8 @@ class Projects extends Table {
   TextColumn get status => text().withDefault(const Constant('active'))(); // active, completed, abandoned
   DateTimeColumn get startedAt => dateTime().nullable()();
   DateTimeColumn get completedAt => dateTime().nullable()();
+  TextColumn get userId => text().nullable()();  // Supabase auth.uid()
+  DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
 

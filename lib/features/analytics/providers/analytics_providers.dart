@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../../data/database/database.dart';
 import '../../../data/providers/repository_providers.dart';
@@ -16,7 +17,8 @@ final performanceServiceProvider = Provider<PerformanceService>((ref) {
 /// Fetches all climbs for analytics computation.
 final allClimbsProvider = FutureProvider<List<Climb>>((ref) async {
   final repo = ref.watch(climbRepositoryProvider);
-  return repo.getAll();
+  final userId = Supabase.instance.client.auth.currentUser?.id;
+  return repo.getAll(userId: userId);
 });
 
 /// Fetches tags for all climbs (climbId to List of Tag).

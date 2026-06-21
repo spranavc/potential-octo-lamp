@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Parse optional -cm "commit message" argument
-DEPLOY_MSG="deploy $(date +%Y-%m-%d-%H%M)"
+# Parse optional -cm "commit message" argument (used for both main and gh-pages)
+DEPLOY_MSG=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     -cm) DEPLOY_MSG="$2"; shift 2 ;;
@@ -23,9 +23,14 @@ rm -rf .dart_tool 2>/dev/null || true
 
 # Commit any uncommitted changes on main before deploying
 if ! git diff --quiet || ! git diff --cached --quiet; then
+  if [[ -z "$DEPLOY_MSG" ]]; then
+    echo "ERROR: Uncommitted changes but no -cm message provided."
+    echo "Run: bash scripts/deploy.sh -cm \"your commit message\""
+    exit 1
+  fi
   echo "=> Committing pending changes"
   git add -A
-  git commit -m "chore: checkpoint before deploy ($(date +%Y-%m-%d))" || true
+  git commit -m "$DEPLOY_MSG" || true
   git push origin main || echo "warning: push to main failed, continuing"
 fi
 
@@ -53,7 +58,7 @@ cp index.html 404.html 2>/dev/null || true
 rm -rf "$TMP"
 
 git add .
-git commit -m "$DEPLOY_MSG" || true
+git commit -m "${DEPLOY_MSG:-deploy $(date +%Y-%m-%d-%H%M)}" || true
 git push origin gh-pages --force
 
 echo "=> Back to main"

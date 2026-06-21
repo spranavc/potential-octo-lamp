@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../../data/providers/repository_providers.dart';
 import '../providers/gym_providers.dart';
@@ -16,7 +17,8 @@ class GymsListScreen extends ConsumerWidget {
     );
     if (name != null && name.trim().isNotEmpty) {
       final repo = ref.read(gymRepositoryProvider);
-      await repo.create(name.trim());
+      final userId = Supabase.instance.client.auth.currentUser?.id;
+      await repo.create(name.trim(), userId: userId);
       ref.invalidate(gymListProvider);
     }
   }

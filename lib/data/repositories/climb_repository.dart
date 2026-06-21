@@ -6,7 +6,7 @@ class ClimbRepository {
 
   final AppDatabase db;
 
-  Future<List<Climb>> getAll() => db.climbsDao.getAll();
+  Future<List<Climb>> getAll({String? userId}) => db.climbsDao.getAll(userId: userId);
 
   Future<List<Climb>> getBySessionId(int sessionId) =>
       db.climbsDao.getBySessionId(sessionId);
@@ -31,6 +31,7 @@ class ClimbRepository {
     String? notes,
     List<int>? tagIds,
     List<int>? projectIds,
+    String? userId,
   }) async {
     if (sessionId <= 0) {
       throw ArgumentError('Invalid session ID');
@@ -58,6 +59,7 @@ class ClimbRepository {
         notes: Value(notes?.trim()),
         loggedAt: DateTime.now(),
       ),
+      userId: userId,
     );
 
     // Attach tags if provided

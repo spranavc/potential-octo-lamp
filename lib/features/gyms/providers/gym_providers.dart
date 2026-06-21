@@ -1,12 +1,19 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../../data/database/database.dart';
 import '../../../data/providers/repository_providers.dart';
 
+/// Current user's Supabase ID, or null if not signed in.
+final currentUserIdProvider = Provider<String?>((ref) {
+  return Supabase.instance.client.auth.currentUser?.id;
+});
+
 /// All gyms, ordered by creation date.
 final gymListProvider = FutureProvider<List<Gym>>((ref) async {
   final repo = ref.watch(gymRepositoryProvider);
-  return repo.getAll();
+  final userId = ref.watch(currentUserIdProvider);
+  return repo.getAll(userId: userId);
 });
 
 /// A single gym by id.
@@ -27,5 +34,6 @@ final gymWallsProvider =
 final gymSessionsProvider =
     FutureProvider.family<List<Session>, int>((ref, gymId) async {
   final repo = ref.watch(sessionRepositoryProvider);
-  return repo.getByGymId(gymId);
+  final userId = ref.watch(currentUserIdProvider);
+  return repo.getByGymId(gymId, userId: userId);
 });

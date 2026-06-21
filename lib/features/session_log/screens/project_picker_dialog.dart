@@ -12,11 +12,13 @@ class ProjectPickerDialog extends StatefulWidget {
     required this.gymId,
     required this.projectRepository,
     this.initialSelectedIds = const [],
+    this.userId,
   });
 
   final int gymId;
   final ProjectRepository projectRepository;
   final List<int> initialSelectedIds;
+  final String? userId;
 
   @override
   State<ProjectPickerDialog> createState() => _ProjectPickerDialogState();
@@ -46,7 +48,7 @@ class _ProjectPickerDialogState extends State<ProjectPickerDialog> {
       content: SizedBox(
         width: double.maxFinite,
         child: FutureBuilder(
-          future: widget.projectRepository.getAll(),
+          future: widget.projectRepository.getAll(userId: widget.userId),
           builder: (context, snapshot) {
             if (snapshot.connectionState != ConnectionState.done) {
               return const Center(child: CircularProgressIndicator());
@@ -293,6 +295,7 @@ class _ProjectPickerDialogState extends State<ProjectPickerDialog> {
                   description: descController.text.trim().isEmpty
                       ? null
                       : descController.text.trim(),
+                  userId: widget.userId,
                 );
                 if (ctx.mounted) {
                   Navigator.of(ctx).pop();

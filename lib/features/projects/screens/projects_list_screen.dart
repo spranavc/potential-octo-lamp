@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../../data/providers/repository_providers.dart';
 import '../../gyms/providers/gym_providers.dart';
@@ -17,12 +18,14 @@ class ProjectsListScreen extends ConsumerWidget {
     );
     if (result != null && result.name.trim().isNotEmpty) {
       final repo = ref.read(projectRepositoryProvider);
+      final userId = Supabase.instance.client.auth.currentUser?.id;
       await repo.create(
         gymId: result.gymId,
         name: result.name.trim(),
         gradeSystem: result.gradeSystem,
         gradeValue: result.gradeValue,
         description: result.description?.trim(),
+        userId: userId,
       );
       ref.invalidate(projectListProvider);
     }
