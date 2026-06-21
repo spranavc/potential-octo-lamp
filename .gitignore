@@ -30,6 +30,10 @@ ios/.symlinks/
 ios/Flutter/Flutter.framework
 ios/Flutter/Flutter.podspec
 
+# Environment / Secrets
+*.env
+*.env.*
+
 # Generated files
 lib/data/database/database.g.dart
 
