@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../features/session_log/screens/session_log_home.dart';
 import '../../features/session_log/screens/active_session_screen.dart';
@@ -20,10 +21,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/gyms',
     redirect: (context, state) {
-      // No auth on web — Supabase JS interop crashes the runtime.
-      // Native platforms use Supabase session check.
-      // For now, allow all navigation on all platforms.
-      // Auth redirect will be re-enabled after Supabase web support is added.
+      final session = Supabase.instance.client.auth.currentSession;
+      final isAuthRoute = state.matchedLocation == '/login' ||
+          state.matchedLocation == '/signup' ||
+          state.matchedLocation.startsWith('/verify-email');
+
+      if (session == null && !isAuthRoute) return '/login';
+      if (session != null && isAuthRoute) return '/gyms';
       return null;
     },
     routes: [

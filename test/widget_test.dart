@@ -3,6 +3,8 @@ import 'package:drift/native.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:climbapp/app.dart';
 import 'package:climbapp/data/database/database.dart';
@@ -17,26 +19,22 @@ AppDatabase _createTestDb() {
   );
 }
 
+bool _supabaseInitialized = false;
+
 void main() {
-  testWidgets('App renders with bottom navigation', (WidgetTester tester) async {
-    final db = _createTestDb();
-    addTearDown(db.close);
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [databaseProvider.overrideWithValue(db)],
-        child: const ClimbApp(),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    // Bottom nav should render
-    expect(find.byType(NavigationBar), findsOneWidget);
-    // Initial tab is Gyms
-    expect(find.text('Gyms'), findsWidgets);
+  setUpAll(() async {
+    if (!_supabaseInitialized) {
+      SharedPreferences.setMockInitialValues({});
+      await Supabase.initialize(
+        url: 'http://localhost:54321',
+        publishableKey: 'test-anon-key',
+      );
+      _supabaseInitialized = true;
+    }
   });
 
-  testWidgets('Login screen can be navigated to', (WidgetTester tester) async {
+  testWidgets('Redirects to login when not authenticated',
+      (WidgetTester tester) async {
     final db = _createTestDb();
     addTearDown(db.close);
 
@@ -48,11 +46,24 @@ void main() {
     );
     await tester.pumpAndSettle();
 
-    // Tap on Settings tab
-    await tester.tap(find.text('Settings'));
+    // Without a session, redirect to /login
+    expect(find.text('Welcome Back'), findsOneWidget);
+    expect(find.text("Don't have an account? Sign Up"), findsOneWidget);
+  });
+
+  testWidgets('Login screen has expected fields', (WidgetTester tester) async {
+    final db = _createTestDb();
+    addTearDown(db.close);
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [databaseProvider.overrideWithValue(db)],
+        child: const ClimbApp(),
+      ),
+    );
     await tester.pumpAndSettle();
 
-    expect(find.text('Export Data'), findsOneWidget);
-    expect(find.text('About'), findsOneWidget);
+    expect(find.text('Email'), findsOneWidget);
+    expect(find.text('Password'), findsOneWidget);
   });
 }
