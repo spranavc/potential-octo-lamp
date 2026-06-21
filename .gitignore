@@ -1,6 +1,9 @@
 # Claude Setup
 .claude/
 
+# Playwright MCP (browser snapshots & console logs)
+.playwright-mcp/
+
 # Docs (personal reference, not part of the app)
 docs/
 
@@ -35,6 +38,7 @@ ios/Flutter/Flutter.podspec
 
 # Generated files
 lib/data/database/database.g.dart
+windows/flutter/
 
 # OS
 .DS_Store

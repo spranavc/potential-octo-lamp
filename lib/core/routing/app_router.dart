@@ -19,7 +19,7 @@ import '../../features/profile/screens/email_verification_screen.dart';
 
 final appRouterProvider = Provider<GoRouter>((ref) {
   return GoRouter(
-    initialLocation: '/gyms',
+    initialLocation: '/session-log',
     redirect: (context, state) {
       try {
         final session = Supabase.instance.client.auth.currentSession;
@@ -28,7 +28,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             state.matchedLocation.startsWith('/verify-email');
 
         if (session == null && !isAuthRoute) return '/login';
-        if (session != null && isAuthRoute) return '/gyms';
+        if (session != null && isAuthRoute) return '/session-log';
         return null;
       } catch (_) {
         // Supabase not initialized yet — allow all navigation
