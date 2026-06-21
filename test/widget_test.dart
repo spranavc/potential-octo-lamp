@@ -1,8 +1,9 @@
 import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
-import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:climbapp/app.dart';
 import 'package:climbapp/data/database/database.dart';
@@ -17,25 +18,24 @@ AppDatabase _createTestDb() {
   );
 }
 
+bool _supabaseInitialized = false;
+
 void main() {
-  testWidgets('App renders with bottom navigation', (WidgetTester tester) async {
-    final db = _createTestDb();
-    addTearDown(() => db.close());
-
-    await tester.pumpWidget(
-      ProviderScope(
-        overrides: [databaseProvider.overrideWithValue(db)],
-        child: const ClimbApp(),
-      ),
-    );
-    await tester.pumpAndSettle();
-
-    // Verify the app renders and shows the bottom navigation bar
-    expect(find.byType(NavigationBar), findsOneWidget);
+  setUp(() async {
+    if (!_supabaseInitialized) {
+      SharedPreferences.setMockInitialValues({});
+      await Supabase.initialize(
+        url: 'http://localhost:54321',
+        publishableKey: 'test-anon-key',
+      );
+      _supabaseInitialized = true;
+    }
   });
 
-  testWidgets('Navigation between tabs works', (WidgetTester tester) async {
+  testWidgets('Login screen shows when not authenticated',
+      (WidgetTester tester) async {
     final db = _createTestDb();
+    addTearDown(db.close);
 
     await tester.pumpWidget(
       ProviderScope(
@@ -43,30 +43,31 @@ void main() {
         child: const ClimbApp(),
       ),
     );
-
     await tester.pumpAndSettle();
 
-    // Tap Analytics tab and verify screen loaded
-    await tester.tap(find.text('Analytics'));
-    await tester.pumpAndSettle();
-    expect(find.text('Grade Pyramid'), findsOneWidget);
+    // Without a Supabase session, the router redirects to /login.
+    expect(find.text('Login'), findsWidgets);
+    expect(find.text("Don't have an account? Sign Up"), findsOneWidget);
+  });
 
-    // Tap Gyms tab and verify screen loaded
-    await tester.tap(find.text('Gyms'));
-    await tester.pumpAndSettle();
-    expect(find.text('Welcome to ClimbApp!'), findsOneWidget);
+  testWidgets('Signup screen navigation from login', (WidgetTester tester) async {
+    final db = _createTestDb();
+    addTearDown(db.close);
 
-    // Verify Projects is no longer a tab (it's a sub-screen under Session Log)
-    expect(find.text('Projects'), findsNothing);
-
-    // Tap Settings tab and verify screen loaded
-    await tester.tap(find.text('Settings'));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [databaseProvider.overrideWithValue(db)],
+        child: const ClimbApp(),
+      ),
+    );
     await tester.pumpAndSettle();
-    expect(find.text('Export Data'), findsOneWidget);
 
-    // Tap back to Log and verify
-    await tester.tap(find.text('Log'));
+    // Tap the sign-up link on the login screen
+    await tester.tap(find.text("Don't have an account? Sign Up"));
     await tester.pumpAndSettle();
-    expect(find.text('No sessions yet'), findsOneWidget);
+
+    // Should now be on the sign-up screen
+    expect(find.text('Create Account'), findsOneWidget);
+    expect(find.text('Already have an account? Login'), findsOneWidget);
   });
 }
