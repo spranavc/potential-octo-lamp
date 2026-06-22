@@ -115,20 +115,21 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     _hasAttemptedCurrentProblem = true;
     bool loggedAsSend = true;
 
-    // If completion < 100%, confirm with user
-    if (_completionPercent != null && _completionPercent! < 100) {
+    // If completion not explicitly set to 100%, confirm with user
+    final percent = _completionPercent;
+    if (percent == null || percent < 100) {
       if (!mounted) return;
       final adjusted = await showDialog<int?>(
         context: context,
         builder: (ctx) => _CompletionConfirmDialog(
-          currentPercent: _completionPercent!,
+          currentPercent: percent ?? 0,
         ),
       );
       if (adjusted == null) return; // user cancelled
       if (adjusted == 100) {
         setState(() => _completionPercent = 100);
       } else {
-        // User confirmed under 100% — log as fail instead
+        // User confirmed under 100% or left default — log as fail instead
         loggedAsSend = false;
         setState(() => _completionPercent = adjusted);
       }
