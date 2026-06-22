@@ -26,6 +26,8 @@ class GymRepository {
     return db.gymsDao.updateName(id, name.trim());
   }
 
+  Future<void> setUserId(int id, String userId) => db.gymsDao.updateUserId(id, userId);
+
   Future<void> delete(int id) => db.gymsDao.deleteById(id);
 
   // ── Walls ─────────────────────────────────────────────────────────────────

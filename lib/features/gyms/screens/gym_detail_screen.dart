@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../../data/database/database.dart';
 import '../../../data/providers/repository_providers.dart';
@@ -17,12 +18,14 @@ class GymDetailScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final gymAsync = ref.watch(gymDetailProvider(gymId));
+    final directoryGyms = ref.watch(directoryGymsProvider).valueOrNull;
     final sessionsAsync = ref.watch(gymSessionsProvider(gymId));
     final projectsAsync = ref.watch(_gymProjectsProvider(gymId));
 
     return gymAsync.when(
       data: (gym) {
-        if (gym == null) {
+        final displayGym = gym ?? directoryGyms?.where((g) => g.id == gymId).firstOrNull;
+        if (displayGym == null) {
           return Scaffold(
             appBar: AppBar(title: const Text('Gym')),
             body: const Center(child: Text('Gym not found')),
@@ -30,17 +33,17 @@ class GymDetailScreen extends ConsumerWidget {
         }
         return Scaffold(
           appBar: AppBar(
-            title: Text(gym.name),
+            title: Text(displayGym.name),
             actions: [
               IconButton(
                 icon: const Icon(Icons.edit),
                 tooltip: 'Rename gym',
-                onPressed: () => _renameGym(context, ref, gym.name),
+                onPressed: () => _renameGym(context, ref, displayGym.name),
               ),
               IconButton(
                 icon: const Icon(Icons.delete),
                 tooltip: 'Delete gym',
-                onPressed: () => _deleteGym(context, ref, gym.name),
+                onPressed: () => _deleteGym(context, ref, displayGym.name),
               ),
             ],
           ),
@@ -194,6 +197,7 @@ class GymDetailScreen extends ConsumerWidget {
     if (confirmed == true) {
       final repo = ref.read(gymRepositoryProvider);
       await repo.delete(gymId);
+      try { await Supabase.instance.client.from('gyms').delete().eq('id', gymId); } catch (_) {}
       ref.invalidate(gymListProvider);
       if (context.mounted) context.go('/gyms');
     }

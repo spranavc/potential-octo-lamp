@@ -38,6 +38,15 @@ class GymsDao extends DatabaseAccessor<AppDatabase> with _$GymsDaoMixin {
         ),
       );
 
+  Future<void> updateUserId(int id, String userId) =>
+      (update(gyms)..where((g) => g.id.equals(id))).write(
+        GymsCompanion(
+          userId: Value(userId),
+          syncStatus: const Value('pending'),
+          updatedAt: Value(DateTime.now()),
+        ),
+      );
+
   Future<void> deleteById(int id) =>
       (delete(gyms)..where((g) => g.id.equals(id))).go();
 }
@@ -265,7 +274,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.fromConnection(super.connection);
 
   @override
-  int get schemaVersion => 5;
+  int get schemaVersion => 6;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -282,6 +291,7 @@ class AppDatabase extends _$AppDatabase {
               TagsCompanion.insert(name: 'slab'),
             ]);
           });
+
         },
         onUpgrade: (m, from, to) async {
           if (from < 2) {
@@ -308,6 +318,28 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(sessions, sessions.syncStatus);
             await m.addColumn(climbs, climbs.syncStatus);
             await m.addColumn(projects, projects.syncStatus);
+          }
+          if (from < 6) {
+            await m.addColumn(gyms, gyms.address);
+            await m.addColumn(gyms, gyms.phone);
+            await m.addColumn(gyms, gyms.website);
+            await m.addColumn(gyms, gyms.description);
+            await m.addColumn(gyms, gyms.photoUrl);
+            await m.addColumn(gyms, gyms.rating);
+            await m.addColumn(gyms, gyms.ratingCount);
+            await m.addColumn(gyms, gyms.hours);
+            await m.addColumn(gyms, gyms.dayPassPrice);
+            await m.addColumn(gyms, gyms.hasBouldering);
+            await m.addColumn(gyms, gyms.hasTopRope);
+            await m.addColumn(gyms, gyms.hasLead);
+            await m.addColumn(gyms, gyms.hasAutoBelay);
+            await m.addColumn(gyms, gyms.hasTrainingArea);
+            await m.addColumn(gyms, gyms.hasYoga);
+            await m.addColumn(gyms, gyms.hasProShop);
+            await m.addColumn(gyms, gyms.hasCafe);
+            await m.addColumn(gyms, gyms.hasShowers);
+            await m.addColumn(gyms, gyms.hasParking);
+            await m.addColumn(gyms, gyms.isDirectory);
           }
         },
       );

@@ -1,14 +1,39 @@
 import 'package:drift/drift.dart';
 
-/// A climbing gym.
+/// A climbing gym — can be user-created or seeded from the directory.
 @DataClassName('Gym')
 class Gyms extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
-  TextColumn get userId => text().nullable()();  // Supabase auth.uid()
-  RealColumn get latitude => real().nullable()();  // for gym discovery / maps
+  TextColumn get userId => text().nullable()();           // Supabase auth.uid() — null for directory gyms
+  // Location
+  RealColumn get latitude => real().nullable()();
   RealColumn get longitude => real().nullable()();
-  TextColumn get syncStatus => text().withDefault(const Constant('synced'))();  // synced | pending | conflict
+  TextColumn get address => text().nullable()();
+  // Contact
+  TextColumn get phone => text().nullable()();
+  TextColumn get website => text().nullable()();
+  // Details
+  TextColumn get description => text().nullable()();
+  TextColumn get photoUrl => text().nullable()();
+  RealColumn get rating => real().nullable()();
+  IntColumn get ratingCount => integer().nullable()();
+  TextColumn get hours => text().nullable()();            // JSON blob of weekly schedule
+  TextColumn get dayPassPrice => text().nullable()();     // "~$22"
+  // Amenities
+  BoolColumn get hasBouldering => boolean().nullable()();
+  BoolColumn get hasTopRope => boolean().nullable()();
+  BoolColumn get hasLead => boolean().nullable()();
+  BoolColumn get hasAutoBelay => boolean().nullable()();
+  BoolColumn get hasTrainingArea => boolean().nullable()();
+  BoolColumn get hasYoga => boolean().nullable()();
+  BoolColumn get hasProShop => boolean().nullable()();
+  BoolColumn get hasCafe => boolean().nullable()();
+  BoolColumn get hasShowers => boolean().nullable()();
+  BoolColumn get hasParking => boolean().nullable()();
+  // Meta
+  BoolColumn get isDirectory => boolean().withDefault(const Constant(false))();  // seeded = true, user = false
+  TextColumn get syncStatus => text().withDefault(const Constant('synced'))();
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }

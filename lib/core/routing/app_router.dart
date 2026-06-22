@@ -11,9 +11,7 @@ import '../../features/analytics/screens/analytics_dashboard.dart';
 import '../../features/gyms/screens/gyms_list_screen.dart';
 import '../../features/gyms/screens/gym_detail_screen.dart';
 import '../../features/projects/screens/projects_list_screen.dart';
-import '../../features/projects/screens/project_detail_screen.dart';
-import '../../features/settings/screens/settings_screen.dart';
-import '../../features/profile/screens/login_screen.dart';
+import '../../features/projects/screens/project_detail_screen.dart';import '../../features/profile/screens/login_screen.dart';
 import '../../features/profile/screens/signup_screen.dart';
 import '../../features/profile/screens/email_verification_screen.dart';
 import '../../features/profile/screens/forgot_password_screen.dart';
@@ -144,13 +142,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
                 path: '/profile',
                 name: 'profile',
                 builder: (context, state) => const ProfileScreen(),
-                routes: [
-                  GoRoute(
-                    path: 'settings',
-                    name: 'profile-settings',
-                    builder: (context, state) => const SettingsScreen(),
-                  ),
-                ],
               ),
             ],
           ),
