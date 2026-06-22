@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../../data/database/database.dart';
 import '../../../data/providers/repository_providers.dart';
@@ -157,6 +158,7 @@ Future<bool> _confirmDeleteSession(BuildContext context, WidgetRef ref, Session 
 Future<void> _deleteSession(WidgetRef ref, Session session) async {
   final repo = ref.read(sessionRepositoryProvider);
   await repo.delete(session.id);
+  try { await Supabase.instance.client.from('sessions').delete().eq('id', session.id); } catch (_) {}
   ref.invalidate(sessionListProvider);
   ref.invalidate(gymSessionsProvider(session.gymId));
 }

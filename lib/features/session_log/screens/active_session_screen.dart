@@ -13,7 +13,7 @@ import '../../projects/providers/project_providers.dart';
 import '../../sync/providers/sync_providers.dart';
 import '../providers/active_session_provider.dart';
 import '../providers/session_list_provider.dart';
-import '../widgets/swipe_card.dart';
+import '../widgets/send_slider.dart';
 import '../widgets/grade_picker.dart';
 import '../widgets/tag_chips.dart';
 import '../widgets/rpe_slider.dart';
@@ -32,9 +32,9 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
   String _gradeValue = 'V-Intro';
   List<int> _selectedTagIds = [];
   double? _rpe;
-  int? _completionPercent;
   String? _climbNotes;
   List<int> _selectedProjectIds = [];
+  List<Project>? _projectList;
   bool _hasAttemptedCurrentProblem = false;
   Timer? _elapsedTimer;
   Duration _elapsed = Duration.zero;
@@ -44,7 +44,12 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      _ensureSessionStarted();
+      final state = ref.read(activeSessionProvider);
+      if (state.isActive) {
+        _startTimer();
+      } else {
+        _ensureSessionStarted();
+      }
     });
   }
 
@@ -82,7 +87,8 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     final sessionState = ref.read(activeSessionProvider);
     if (sessionState.isActive) return;
 
-    final gyms = await ref.read(gymListProvider.future);
+    final allGyms = await ref.read(gymListProvider.future);
+    final gyms = allGyms.where((g) => g.name != 'Demo Gym').toList();
 
     if (gyms.isEmpty) {
       if (!mounted) return;
@@ -138,6 +144,8 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     try {
       await ref.read(activeSessionProvider.notifier).start(gymId: gymId);
       _startTimer();
+      // Pre-fetch project list so we know if user has existing projects
+      _projectList = await ref.read(projectListProvider.future);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -147,63 +155,36 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     }
   }
 
-  Future<void> _logSend() async {
+  void _logClimb(int completionPercent) async {
     _hasAttemptedCurrentProblem = true;
-    bool loggedAsSend = true;
 
-    // If completion not explicitly set to 100%, confirm with user
-    final percent = _completionPercent;
-    if (percent == null || percent < 100) {
-      if (!mounted) return;
-      final adjusted = await showDialog<int?>(
+    // Always prompt for RPE
+    double? rpe = _rpe;
+    if (mounted) {
+      rpe = await showDialog<double>(
         context: context,
-        builder: (ctx) => _CompletionConfirmDialog(
-          currentPercent: percent ?? 0,
-        ),
+        builder: (ctx) => _RpeDialog(),
       );
-      if (adjusted == null) return; // user cancelled
-      if (adjusted == 100) {
-        setState(() => _completionPercent = 100);
+      if (rpe == null) return; // user cancelled
+    }
+
+    ref.read(activeSessionProvider.notifier).logAttempt(
+      gradeSystem: _gradeSystem,
+      gradeValue: _gradeValue,
+      sent: completionPercent == 100,
+      rpe: rpe,
+      notes: _climbNotes?.trim().isEmpty == true ? null : _climbNotes?.trim(),
+      tagIds: _selectedTagIds.isNotEmpty ? _selectedTagIds : null,
+    );
+    _invalidateProjectProgress();
+    _resetTags();
+    if (mounted) {
+      if (completionPercent == 100) {
+        _showPostSendDialog();
       } else {
-        // User confirmed under 100% or left default — log as fail instead
-        loggedAsSend = false;
-        setState(() => _completionPercent = adjusted);
+        ref.read(activeSessionProvider.notifier).nextAttempt();
       }
     }
-
-    await ref.read(activeSessionProvider.notifier).logAttempt(
-          gradeSystem: _gradeSystem,
-          gradeValue: _gradeValue,
-          sent: loggedAsSend,
-          rpe: _rpe,
-          completionPercent: _completionPercent ?? 100,
-          notes: _climbNotes?.trim().isEmpty == true ? null : _climbNotes?.trim(),
-          tagIds: _selectedTagIds.isNotEmpty ? _selectedTagIds : null,
-        );
-    _invalidateProjectProgress();
-    _resetTags();
-
-    if (loggedAsSend && mounted) {
-      _showPostSendDialog();
-    } else if (mounted) {
-      ref.read(activeSessionProvider.notifier).nextAttempt();
-    }
-  }
-
-  Future<void> _logFail() async {
-    _hasAttemptedCurrentProblem = true;
-    await ref.read(activeSessionProvider.notifier).logAttempt(
-          gradeSystem: _gradeSystem,
-          gradeValue: _gradeValue,
-          sent: false,
-          rpe: _rpe,
-          completionPercent: _completionPercent,
-          notes: _climbNotes?.trim().isEmpty == true ? null : _climbNotes?.trim(),
-          tagIds: _selectedTagIds.isNotEmpty ? _selectedTagIds : null,
-        );
-    _invalidateProjectProgress();
-    _resetTags();
-    ref.read(activeSessionProvider.notifier).nextAttempt();
   }
 
   void _skipToNextProblem() async {
@@ -233,6 +214,8 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     }
     ref.read(activeSessionProvider.notifier).nextProblem();
     _hasAttemptedCurrentProblem = false;
+    setState(() { _selectedProjectIds = []; });
+    ref.read(activeSessionProvider.notifier).clearProjects();
     _resetTags();
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -250,7 +233,6 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     setState(() {
       _selectedTagIds = [];
       _rpe = null;
-      _completionPercent = null;
       _climbNotes = null;
     });
   }
@@ -406,7 +388,6 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
   @override
   Widget build(BuildContext context) {
     final sessionState = ref.watch(activeSessionProvider);
-    final tagLabelsAsync = ref.watch(_tagLabelsProvider(_selectedTagIds));
     final projectNameStr = _selectedProjectIds.isNotEmpty
         ? _selectedProjectIds.join(',')
         : '';
@@ -426,6 +407,16 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
             error: (_, __) => const Text('Logging Session'),
           ),
           actions: [
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: Text(
+                _formatDuration(_elapsed),
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color: Theme.of(context).colorScheme.primary,
+                    ),
+              ),
+            ),
             TextButton(
               onPressed: () => _endSession(),
               child: const Text('End Session'),
@@ -436,46 +427,37 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
           child: SingleChildScrollView(
               child: Column(
                 children: [
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
 
-                // Elapsed timer
+                // Problem / attempt — large, at top
                 Text(
-                  _formatDuration(_elapsed),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: Theme.of(context).colorScheme.primary,
+                  'Problem ${sessionState.currentProblemNumber}',
+                  style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
                       ),
                 ),
-                const SizedBox(height: 4),
+                Text(
+                  'Attempt ${sessionState.currentAttemptNumber}',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: Colors.grey[600],
+                      ),
+                ),
+                const SizedBox(height: 12),
 
-                // Project chip above the card
-                _ProjectChip(
-                  projectName: projectNameAsync.valueOrNull,
-                  onTap: () => _showProjectPicker(),
+                // Tags above the slider
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
+                  child: TagChips(
+                    selectedIds: _selectedTagIds,
+                    onChanged: (ids) => setState(() => _selectedTagIds = ids),
+                  ),
                 ),
 
                 const SizedBox(height: 12),
 
-                // Problem / attempt indicator
-                Text(
-                  'Problem #${sessionState.currentProblemNumber} · Attempt #${sessionState.currentAttemptNumber}',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Colors.grey[600],
-                      ),
-                ),
-                const SizedBox(height: 8),
-
-                // The swipe card
-                SwipeCard(
-                  gradeSystem: _gradeSystem,
+                // The send slider
+                SendSlider(
                   gradeValue: _gradeValue,
-                  selectedTagIds: _selectedTagIds,
-                  attempts: sessionState.currentAttemptNumber,
-                  rpe: _rpe,
-                  tagLabels: tagLabelsAsync.valueOrNull ?? '',
-                  projectName: projectNameAsync.valueOrNull,
-                  onSend: _logSend,
-                  onFail: _logFail,
                   onEditGrade: () {
                     GradePicker.show(
                       context,
@@ -489,6 +471,17 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
                       initialValue: _gradeValue,
                     );
                   },
+                  key: ValueKey('problem-${sessionState.currentProblemNumber}'),
+                  onLogWorked: (percent) => _logClimb(percent),
+                ),
+
+                const SizedBox(height: 12),
+
+                // Project — below slider, label changes based on whether user has projects
+                _ProjectChip(
+                  projectName: projectNameAsync.valueOrNull,
+                  onTap: () => _showProjectPicker(),
+                  hasExistingProjects: (_projectList ?? []).isNotEmpty,
                 ),
 
                 const SizedBox(height: 16),
@@ -498,25 +491,6 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
                   padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Column(
                     children: [
-                      // Tags
-                      TagChips(
-                        selectedIds: _selectedTagIds,
-                        onChanged: (ids) => setState(() => _selectedTagIds = ids),
-                      ),
-                      const SizedBox(height: 16),
-
-                      // RPE slider
-                      RpeSlider(
-                        value: _rpe,
-                        onChanged: (v) => setState(() => _rpe = v),
-                      ),
-
-                      // Completion %
-                      const SizedBox(height: 12),
-                      _CompletionSlider(
-                        value: _completionPercent,
-                        onChanged: (v) => setState(() => _completionPercent = v),
-                      ),
 
                       // Quick notes
                       const SizedBox(height: 12),
@@ -688,14 +662,6 @@ class _CounterBadge extends StatelessWidget {
   }
 }
 
-/// Resolves tag IDs to a comma-separated label string for display.
-final _tagLabelsProvider = FutureProvider.family<String, List<int>>((ref, tagIds) async {
-  if (tagIds.isEmpty) return '';
-  final tags = await ref.watch(tagRepositoryProvider).getAll();
-  final tagMap = {for (final t in tags) t.id: t.name};
-  return tagIds.map((id) => tagMap[id] ?? '$id').join(', ');
-});
-
 /// Resolves project IDs to their names by fetching all projects and filtering.
 final _projectNamesProvider =
     FutureProvider.family<String?, String>((ref, idList) async {
@@ -714,127 +680,96 @@ final _projectNamesProvider =
 /// A small chip that shows the selected project name, or "No project".
 /// Tapping opens the project picker dialog.
 class _ProjectChip extends StatelessWidget {
-  const _ProjectChip({required this.projectName, required this.onTap});
+  const _ProjectChip({required this.projectName, required this.onTap, this.hasExistingProjects = false});
 
   final String? projectName;
   final VoidCallback onTap;
+  final bool hasExistingProjects;
 
   @override
   Widget build(BuildContext context) {
+    final label = projectName ?? (hasExistingProjects
+        ? '+ Add Existing Project to Session'
+        : '+ Create a New Project');
+
     return ActionChip(
       avatar: Icon(
         projectName != null ? Icons.rocket_launch : Icons.rocket_launch_outlined,
         size: 18,
       ),
-      label: Text(projectName ?? '+ Add to project'),
+      label: Text(label),
       onPressed: onTap,
     );
   }
 }
 
-// ── Completion Confirm Dialog ────────────────────────────────────────────────
+// ── RPE Prompt Dialog ────────────────────────────────────────────────────────
 
-class _CompletionConfirmDialog extends StatefulWidget {
-  const _CompletionConfirmDialog({required this.currentPercent});
-
-  final int currentPercent;
-
+class _RpeDialog extends StatefulWidget {
   @override
-  State<_CompletionConfirmDialog> createState() =>
-      _CompletionConfirmDialogState();
+  State<_RpeDialog> createState() => _RpeDialogState();
 }
 
-class _CompletionConfirmDialogState extends State<_CompletionConfirmDialog> {
-  late double _percent;
-
-  @override
-  void initState() {
-    super.initState();
-    _percent = widget.currentPercent.toDouble();
-  }
+class _RpeDialogState extends State<_RpeDialog> {
+  double _rpe = 5;
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Confirm Send'),
+      title: const Text('How hard was this climb?'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Text(
-            'You marked this as ${widget.currentPercent}% completed. '
-            'Did you actually send it?',
+            '${_rpe.round()} / 10',
+            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            _rpeLabel(_rpe.round()),
+            style: TextStyle(color: Colors.grey[600]),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 16),
-          Text(
-            'Completion: ${_percent.round()}%',
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
           Slider(
-            value: _percent,
-            min: 0,
-            max: 100,
-            divisions: 20,
-            onChanged: (v) => setState(() => _percent = v),
+            value: _rpe,
+            min: 1,
+            max: 10,
+            divisions: 9,
+            label: '${_rpe.round()}',
+            onChanged: (v) => setState(() => _rpe = v),
+          ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text('1 — Easy', style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+              Text('10 — Limit', style: TextStyle(fontSize: 11, color: Colors.grey[500])),
+            ],
           ),
         ],
       ),
       actions: [
         TextButton(
-          onPressed: () => Navigator.pop(context, null),
-          child: const Text('Cancel'),
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Skip'),
         ),
         FilledButton(
-          onPressed: () => Navigator.pop(context, _percent.round()),
-          child: Text(_percent.round() == 100
-              ? 'Yes, I sent it!'
-              : 'Save (${_percent.round()}%)'),
+          onPressed: () => Navigator.pop(context, _rpe.roundToDouble()),
+          child: const Text('Save'),
         ),
       ],
     );
   }
-}
 
-// ── Completion % Slider ─────────────────────────────────────────────────────
-
-class _CompletionSlider extends StatelessWidget {
-  const _CompletionSlider({required this.value, required this.onChanged});
-
-  final int? value;
-  final void Function(int? newValue) onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    final displayValue = value ?? 0;
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              displayValue > 0 ? 'Completed: $displayValue%' : 'Completion %',
-              style: displayValue > 0
-                  ? Theme.of(context).textTheme.titleSmall
-                  : const TextStyle(color: Colors.grey),
-            ),
-          ],
-        ),
-        Slider(
-          value: (value ?? 0).toDouble(),
-          min: 0,
-          max: 100,
-          divisions: 20,
-          label: value == null || value == 0 ? null : '$displayValue%',
-          onChanged: (v) {
-            if (v == 0) {
-              onChanged(null);
-            } else {
-              onChanged(v.round());
-            }
-          },
-        ),
-      ],
-    );
+  String _rpeLabel(int rpe) {
+    if (rpe <= 2) return 'Warm-up territory';
+    if (rpe <= 4) return 'Comfortable effort';
+    if (rpe <= 6) return 'Working hard';
+    if (rpe <= 8) return 'Pushing limits';
+    return 'Took everything you had';
   }
 }
 
@@ -871,7 +806,7 @@ class _RecentClimbsList extends StatelessWidget {
               separatorBuilder: (_, __) => const SizedBox(height: 4),
               itemBuilder: (context, index) {
                 final climb = reversed[index];
-                final isSend = climb.sent;
+                final isSent = climb.sent;
                 return InkWell(
                   onTap: () => _ClimbDetailSheet.show(
                     context,
@@ -882,18 +817,18 @@ class _RecentClimbsList extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 6),
                     decoration: BoxDecoration(
-                      color: (isSend ? Colors.green : Colors.red).withAlpha(15),
+                      color: (isSent ? Colors.green : Colors.orange).withAlpha(15),
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
-                        color: (isSend ? Colors.green : Colors.red).withAlpha(60),
+                        color: (isSent ? Colors.green : Colors.orange).withAlpha(60),
                       ),
                     ),
                     child: Row(
                       children: [
                         Icon(
-                          isSend ? Icons.check_circle : Icons.cancel,
+                          isSent ? Icons.check_circle : Icons.fitness_center,
                           size: 16,
-                          color: isSend ? Colors.green : Colors.red,
+                          color: isSent ? Colors.green : Colors.orange,
                         ),
                         const SizedBox(width: 8),
                         Text(
@@ -961,19 +896,19 @@ class _ClimbDetailSheet extends StatelessWidget {
                 const Spacer(),
                 Chip(
                   avatar: Icon(
-                    isSend ? Icons.check : Icons.close,
+                    isSend ? Icons.check : Icons.fitness_center,
                     size: 16,
                     color: Colors.white,
                   ),
                   label: Text(
-                    isSend ? 'SEND' : 'FAIL',
+                    isSend ? 'SENT' : 'WORKED',
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
                   ),
-                  backgroundColor: isSend ? Colors.green : Colors.red,
+                  backgroundColor: isSend ? Colors.green : Colors.orange,
                 ),
               ],
             ),

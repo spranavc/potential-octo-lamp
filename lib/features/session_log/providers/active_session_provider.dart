@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
@@ -213,6 +214,7 @@ class ActiveSessionNotifier extends StateNotifier<ActiveSessionState> {
     if (!state.isActive) return;
 
     await _sessionService.endSession(state.sessionId!);
+    debugPrint('[Session] ended session ${state.sessionId}');
 
     state = const ActiveSessionState();
   }

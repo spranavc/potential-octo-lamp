@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 
 import '../../../domain/services/analytics_service.dart';
 
-/// Stacked vertical bar chart showing sends (green) and fails (red) per V-grade.
+/// Stacked vertical bar chart showing sent (green) and worked (orange) per V-grade.
 class GradePyramidChart extends StatelessWidget {
   const GradePyramidChart({
     super.key,
@@ -46,7 +46,7 @@ class GradePyramidChart extends StatelessWidget {
                     BarChartRodStackItem(
                       point.sends.toDouble(),
                       (point.sends + point.fails).toDouble(),
-                      const Color(0xFFEF5350), // red — fails
+                      const Color(0xFFFF9800), // orange — worked
                     ),
                   ],
                 ),

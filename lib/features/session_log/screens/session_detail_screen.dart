@@ -51,7 +51,7 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
           builder: (ctx) => AlertDialog(
             title: const Text('Delete Climb'),
             content: Text(
-                'Delete this ${climb.sent ? 'SEND' : 'FAIL'} '
+                'Delete this ${climb.sent ? 'SENT' : 'WORKED'} '
                 '(${climb.gradeValue})? This cannot be undone.'),
             actions: [
               TextButton(
@@ -71,6 +71,7 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
   Future<void> _deleteClimb(int climbId) async {
     final repo = ref.read(climbRepositoryProvider);
     await repo.delete(climbId);
+    try { await Supabase.instance.client.from('climbs').delete().eq('id', climbId); } catch (_) {}
     ref.invalidate(sessionClimbsProvider(widget.sessionId));
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -138,14 +139,14 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
                     _Stat(label: 'Total', value: '$totalCount'),
-                    _Stat(label: 'Sends', value: '$sendCount', color: Colors.green),
+                    _Stat(label: 'Sent', value: '$sendCount', color: Colors.green),
                     _Stat(
-                      label: 'Fails',
+                      label: 'Worked',
                       value: '${totalCount - sendCount}',
-                      color: Colors.red,
+                      color: Colors.orange,
                     ),
                     _Stat(
-                      label: 'Send Rate',
+                      label: 'Sent Rate',
                       value: totalCount > 0
                           ? '${(sendCount / totalCount * 100).round()}%'
                           : '—',
@@ -246,7 +247,7 @@ class _ClimbCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-          color: isSend ? Colors.green.shade300 : Colors.red.shade300,
+          color: isSend ? Colors.green.shade300 : Colors.orange.shade300,
           width: 2,
         ),
       ),
@@ -272,17 +273,17 @@ class _ClimbCard extends StatelessWidget {
                   avatar: Icon(
                     isSend ? Icons.check : Icons.close,
                     size: 16,
-                    color: isSend ? Colors.green : Colors.red,
+                    color: isSend ? Colors.green : Colors.orange,
                   ),
                   label: Text(
-                    isSend ? 'SEND' : 'FAIL',
+                    isSend ? 'SENT' : 'WORKED',
                     style: TextStyle(
-                      color: isSend ? Colors.green : Colors.red,
+                      color: isSend ? Colors.green : Colors.orange,
                       fontWeight: FontWeight.bold,
                       fontSize: 12,
                     ),
                   ),
-                  backgroundColor: (isSend ? Colors.green : Colors.red).withAlpha(20),
+                  backgroundColor: (isSend ? Colors.green : Colors.orange).withAlpha(20),
                   side: BorderSide.none,
                 ),
               ],
@@ -477,9 +478,9 @@ class _RetroClimbDialogState extends State<_RetroClimbDialog> {
                       rpe: _rpe,
                       tagIds: _selectedTagIds,
                     )),
-                    icon: const Icon(Icons.close, color: Colors.red),
-                    label: const Text('Fail'),
-                    style: OutlinedButton.styleFrom(foregroundColor: Colors.red),
+                    icon: const Icon(Icons.close, color: Colors.orange),
+                    label: const Text('Worked'),
+                    style: OutlinedButton.styleFrom(foregroundColor: Colors.orange),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -494,7 +495,7 @@ class _RetroClimbDialogState extends State<_RetroClimbDialog> {
                       tagIds: _selectedTagIds,
                     )),
                     icon: const Icon(Icons.check),
-                    label: const Text('Send'),
+                    label: const Text('Sent'),
                   ),
                 ),
               ],
@@ -592,13 +593,13 @@ class _EditClimbDialogState extends State<_EditClimbDialog> {
               },
             ),
 
-            // Send / Fail toggle
+            // Sent / Worked toggle
             SwitchListTile(
-              title: Text(_sent ? 'SEND' : 'FAIL'),
-              subtitle: Text(_sent ? 'Tap to mark as fail' : 'Tap to mark as send'),
+              title: Text(_sent ? 'SENT' : 'WORKED'),
+              subtitle: Text(_sent ? 'Tap to mark as worked' : 'Tap to mark as sent'),
               value: _sent,
               activeThumbColor: Colors.green,
-              inactiveTrackColor: Colors.red.shade200,
+              inactiveTrackColor: Colors.orange.shade200,
               onChanged: (v) => setState(() {
                 _sent = v;
                 // Changing to send → completion should be 100%

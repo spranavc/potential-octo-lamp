@@ -134,6 +134,7 @@ Future<bool> _confirmDeleteProject(BuildContext context, WidgetRef ref, Project 
 Future<void> _deleteProject(WidgetRef ref, Project project) async {
   final repo = ref.read(projectRepositoryProvider);
   await repo.delete(project.id);
+  try { await Supabase.instance.client.from('projects').delete().eq('id', project.id); } catch (_) {}
   ref.invalidate(projectListProvider);
 }
 
@@ -153,8 +154,8 @@ Widget _buildDescription(BuildContext context) {
         Expanded(
           child: Text(
             'A project is a climb you\'re working on across multiple sessions — '
-            'like sending that V5 in the cave. Log attempts against it and track '
-            'your progress over time.',
+            'like sending that V5 in the cave. Log attempts against across multiple '
+            'sessions and track your progress over time.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                   color: Colors.grey[700],
                 ),

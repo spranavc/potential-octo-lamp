@@ -1,12 +1,6 @@
-import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
-
-/// Dev account credentials for Playwright / local testing.
-/// Only compiled into debug builds.
-const _kDevEmail = String.fromEnvironment('BDR_TEST_EMAIL');
-const _kDevPass = String.fromEnvironment('BDR_TEST_PASS');
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -28,26 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    // Dev auto-login for local testing.
-    // Build with: flutter build web --dart-define=BDR_TEST_EMAIL=... --dart-define=BDR_TEST_PASS=...
-    // Then navigate to /login?bdr_test=1
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      try {
-        final routeName = ModalRoute.of(context)?.settings.name;
-        if (routeName != null && Uri.parse(routeName).queryParameters['bdr_test'] == '1') {
-          if (_kDevEmail.isNotEmpty && _kDevPass.isNotEmpty) {
-            _emailController.text = _kDevEmail;
-            _passwordController.text = _kDevPass;
-            _login();
-          }
-        }
-      } catch (_) {}
-    });
   }
 
   Future<void> _login() async {
