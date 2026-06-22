@@ -6,6 +6,7 @@ import '../../../data/database/database.dart';
 import '../../../data/providers/repository_providers.dart';
 import '../../../shared/utils/time_format.dart';
 import '../../projects/providers/project_providers.dart';
+import '../../sync/providers/sync_providers.dart';
 import '../providers/gym_providers.dart';
 
 class GymDetailScreen extends ConsumerWidget {
@@ -171,6 +172,7 @@ class GymDetailScreen extends ConsumerWidget {
       await repo.updateName(gymId, name.trim());
       ref.invalidate(gymDetailProvider(gymId));
       ref.invalidate(gymListProvider);
+      triggerPushSync(ref);
     }
   }
 

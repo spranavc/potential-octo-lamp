@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 import '../../../data/database/database.dart';
 import '../../../data/providers/repository_providers.dart';
 import '../../gyms/providers/gym_providers.dart';
+import '../../sync/providers/sync_providers.dart';
 import '../providers/project_providers.dart';
 import '../widgets/project_card.dart';
 
@@ -29,6 +30,7 @@ class ProjectsListScreen extends ConsumerWidget {
         userId: userId,
       );
       ref.invalidate(projectListProvider);
+      triggerPushSync(ref);
     }
   }
 

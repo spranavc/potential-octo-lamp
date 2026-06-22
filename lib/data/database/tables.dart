@@ -6,6 +6,9 @@ class Gyms extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
   TextColumn get userId => text().nullable()();  // Supabase auth.uid()
+  RealColumn get latitude => real().nullable()();  // for gym discovery / maps
+  RealColumn get longitude => real().nullable()();
+  TextColumn get syncStatus => text().withDefault(const Constant('synced'))();  // synced | pending | conflict
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
@@ -43,6 +46,7 @@ class Sessions extends Table {
   DateTimeColumn get endedAt => dateTime().nullable()();
   TextColumn get notes => text().nullable()();
   TextColumn get userId => text().nullable()();  // Supabase auth.uid()
+  TextColumn get syncStatus => text().withDefault(const Constant('synced'))();  // synced | pending | conflict
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
@@ -65,6 +69,7 @@ class Climbs extends Table {
   TextColumn get notes => text().nullable()();
   DateTimeColumn get loggedAt => dateTime()();
   TextColumn get userId => text().nullable()();  // Supabase auth.uid()
+  TextColumn get syncStatus => text().withDefault(const Constant('synced'))();  // synced | pending | conflict
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }
@@ -100,6 +105,7 @@ class Projects extends Table {
   DateTimeColumn get startedAt => dateTime().nullable()();
   DateTimeColumn get completedAt => dateTime().nullable()();
   TextColumn get userId => text().nullable()();  // Supabase auth.uid()
+  TextColumn get syncStatus => text().withDefault(const Constant('synced'))();  // synced | pending | conflict
   DateTimeColumn get updatedAt => dateTime().nullable()();
   DateTimeColumn get createdAt => dateTime().withDefault(currentDateAndTime)();
 }

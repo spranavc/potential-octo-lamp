@@ -25,11 +25,17 @@ class GymsDao extends DatabaseAccessor<AppDatabase> with _$GymsDaoMixin {
       into(gyms).insert(GymsCompanion.insert(
         name: name,
         userId: Value(userId),
+        syncStatus: const Value('pending'),
+        updatedAt: Value(DateTime.now()),
       ));
 
   Future<void> updateName(int id, String name) =>
       (update(gyms)..where((g) => g.id.equals(id))).write(
-        GymsCompanion(name: Value(name)),
+        GymsCompanion(
+          name: Value(name),
+          syncStatus: const Value('pending'),
+          updatedAt: Value(DateTime.now()),
+        ),
       );
 
   Future<void> deleteById(int id) =>
@@ -60,15 +66,24 @@ class SessionsDao extends DatabaseAccessor<AppDatabase> with _$SessionsDaoMixin 
   }
 
   Future<int> startSession(SessionsCompanion session, {String? userId}) {
-    final s = userId != null
-        ? session.copyWith(userId: Value(userId))
-        : session;
+    var s = session;
+    if (userId != null) {
+      s = s.copyWith(userId: Value(userId));
+    }
+    s = s.copyWith(
+      syncStatus: const Value('pending'),
+      updatedAt: Value(DateTime.now()),
+    );
     return into(sessions).insert(s);
   }
 
   Future<void> endSession(int id, DateTime endedAt) =>
       (update(sessions)..where((s) => s.id.equals(id))).write(
-        SessionsCompanion(endedAt: Value(endedAt)),
+        SessionsCompanion(
+          endedAt: Value(endedAt),
+          syncStatus: const Value('pending'),
+          updatedAt: Value(DateTime.now()),
+        ),
       );
 
   Future<void> deleteById(int id) =>
@@ -115,9 +130,14 @@ class ClimbsDao extends DatabaseAccessor<AppDatabase> with _$ClimbsDaoMixin {
   }
 
   Future<int> insertClimb(ClimbsCompanion climb, {String? userId}) {
-    final c = userId != null
-        ? climb.copyWith(userId: Value(userId))
-        : climb;
+    var c = climb;
+    if (userId != null) {
+      c = c.copyWith(userId: Value(userId));
+    }
+    c = c.copyWith(
+      syncStatus: const Value('pending'),
+      updatedAt: Value(DateTime.now()),
+    );
     return into(climbs).insert(c);
   }
 
@@ -143,6 +163,8 @@ class ClimbsDao extends DatabaseAccessor<AppDatabase> with _$ClimbsDaoMixin {
           gradeSystem: gradeSystem == null ? const Value.absent() : Value(gradeSystem.trim()),
           gradeValue: gradeValue == null ? const Value.absent() : Value(gradeValue.trim()),
           loggedAt: loggedAt == null ? const Value.absent() : Value(loggedAt),
+          syncStatus: const Value('pending'),
+          updatedAt: Value(DateTime.now()),
         ),
       );
 
@@ -187,15 +209,24 @@ class ProjectsDao extends DatabaseAccessor<AppDatabase> with _$ProjectsDaoMixin 
       (select(projects)..where((p) => p.id.equals(id))).getSingleOrNull();
 
   Future<int> insertProject(ProjectsCompanion project, {String? userId}) {
-    final p = userId != null
-        ? project.copyWith(userId: Value(userId))
-        : project;
+    var p = project;
+    if (userId != null) {
+      p = p.copyWith(userId: Value(userId));
+    }
+    p = p.copyWith(
+      syncStatus: const Value('pending'),
+      updatedAt: Value(DateTime.now()),
+    );
     return into(projects).insert(p);
   }
 
   Future<void> updateStatus(int id, String status) =>
       (update(projects)..where((p) => p.id.equals(id))).write(
-        ProjectsCompanion(status: Value(status)),
+        ProjectsCompanion(
+          status: Value(status),
+          syncStatus: const Value('pending'),
+          updatedAt: Value(DateTime.now()),
+        ),
       );
 
   Future<void> deleteById(int id) =>
@@ -234,7 +265,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.fromConnection(super.connection);
 
   @override
-  int get schemaVersion => 4;
+  int get schemaVersion => 5;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -269,6 +300,14 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(climbs, climbs.updatedAt);
             await m.addColumn(projects, projects.userId);
             await m.addColumn(projects, projects.updatedAt);
+          }
+          if (from < 5) {
+            await m.addColumn(gyms, gyms.syncStatus);
+            await m.addColumn(gyms, gyms.latitude);
+            await m.addColumn(gyms, gyms.longitude);
+            await m.addColumn(sessions, sessions.syncStatus);
+            await m.addColumn(climbs, climbs.syncStatus);
+            await m.addColumn(projects, projects.syncStatus);
           }
         },
       );

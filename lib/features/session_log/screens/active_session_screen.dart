@@ -5,8 +5,10 @@ import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../../data/database/database.dart';
 import '../../../data/providers/repository_providers.dart';
+import '../../analytics/providers/analytics_providers.dart';
 import '../../gyms/providers/gym_providers.dart';
 import '../../projects/providers/project_providers.dart';
+import '../../sync/providers/sync_providers.dart';
 import '../providers/active_session_provider.dart';
 import '../providers/session_list_provider.dart';
 import '../widgets/swipe_card.dart';
@@ -31,6 +33,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
   int? _completionPercent;
   String? _climbNotes;
   List<int> _selectedProjectIds = [];
+  bool _hasAttemptedCurrentProblem = false;
 
   @override
   void initState() {
@@ -109,6 +112,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
   }
 
   Future<void> _logSend() async {
+    _hasAttemptedCurrentProblem = true;
     // If completion < 100%, confirm with user
     if (_completionPercent != null && _completionPercent! < 100) {
       if (!mounted) return;
@@ -142,6 +146,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
   }
 
   Future<void> _logFail() async {
+    _hasAttemptedCurrentProblem = true;
     await ref.read(activeSessionProvider.notifier).logAttempt(
           gradeSystem: _gradeSystem,
           gradeValue: _gradeValue,
@@ -156,18 +161,44 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     ref.read(activeSessionProvider.notifier).nextAttempt();
   }
 
-  void _skipToNextProblem() {
+  void _skipToNextProblem() async {
     if (!mounted) return;
-    ref.read(activeSessionProvider.notifier).nextProblem();
-    _resetTags();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          'Skipped to Problem #${ref.read(activeSessionProvider).currentProblemNumber}',
+    if (!_hasAttemptedCurrentProblem) {
+      final proceed = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('No Attempts Yet'),
+          content: const Text(
+            'You haven\'t made any attempts on this problem. '
+            'The climb will not be recorded. Skip anyway?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Skip'),
+            ),
+          ],
         ),
-        duration: const Duration(seconds: 1),
-      ),
-    );
+      );
+      if (proceed != true) return;
+    }
+    ref.read(activeSessionProvider.notifier).nextProblem();
+    _hasAttemptedCurrentProblem = false;
+    _resetTags();
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Skipped to Problem #${ref.read(activeSessionProvider).currentProblemNumber}',
+          ),
+          duration: const Duration(seconds: 1),
+        ),
+      );
+    }
   }
 
   void _resetTags() {
@@ -329,6 +360,9 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     }
     ref.invalidate(sessionListProvider);
     ref.invalidate(gymSessionsProvider(state.gymId));
+    ref.invalidate(allClimbsProvider);
+    // Push pending changes to Supabase in the background
+    triggerPushSync(ref);
     if (mounted) context.go('/session-log');
   }
 

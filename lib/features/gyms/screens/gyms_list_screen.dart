@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../../data/providers/repository_providers.dart';
+import '../../sync/providers/sync_providers.dart';
 import '../providers/gym_providers.dart';
 import '../widgets/gym_card.dart';
 
@@ -20,6 +21,7 @@ class GymsListScreen extends ConsumerWidget {
       final userId = Supabase.instance.client.auth.currentUser?.id;
       await repo.create(name.trim(), userId: userId);
       ref.invalidate(gymListProvider);
+      triggerPushSync(ref);
     }
   }
 

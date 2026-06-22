@@ -287,10 +287,13 @@ Test files: widget_test, data/database/tables_test, data/repositories/{climb,ses
 | Item | Status |
 |---|---|
 | Sync infrastructure (push/pull to Supabase) | Not started |
-| `userId` columns on local tables | Not started |
+| `userId` columns on local tables | ✅ Done |
 | Profile setup screen | Backlog |
 | Structured goal tracking | Backlog |
 | Google/Apple OAuth | Not started |
+| App icon generation | Backlog |
+| App name change refactor | Backlog |
+| Gym discovery (map, photos, amenities, directory) | Planned — see swirling-discovering-cloud.md |
 
 ## Behavioral Guidelines
 

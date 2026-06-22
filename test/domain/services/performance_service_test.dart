@@ -24,6 +24,7 @@ Climb _makeClimb({
     rpe: rpe,
     notes: null,
     loggedAt: loggedAt ?? DateTime(2025, 1, 1),
+    syncStatus: 'synced',
     createdAt: DateTime.now(),
   );
 }
