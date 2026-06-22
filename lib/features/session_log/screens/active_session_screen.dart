@@ -27,7 +27,7 @@ class ActiveSessionScreen extends ConsumerStatefulWidget {
 class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
   // Current climb being configured
   String _gradeSystem = 'V-scale';
-  String _gradeValue = 'VB';
+  String _gradeValue = 'V-Intro';
   List<int> _selectedTagIds = [];
   double? _rpe;
   int? _completionPercent;
@@ -113,6 +113,8 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
 
   Future<void> _logSend() async {
     _hasAttemptedCurrentProblem = true;
+    bool loggedAsSend = true;
+
     // If completion < 100%, confirm with user
     if (_completionPercent != null && _completionPercent! < 100) {
       if (!mounted) return;
@@ -125,13 +127,17 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
       if (adjusted == null) return; // user cancelled
       if (adjusted == 100) {
         setState(() => _completionPercent = 100);
+      } else {
+        // User confirmed under 100% — log as fail instead
+        loggedAsSend = false;
+        setState(() => _completionPercent = adjusted);
       }
     }
 
     await ref.read(activeSessionProvider.notifier).logAttempt(
           gradeSystem: _gradeSystem,
           gradeValue: _gradeValue,
-          sent: true,
+          sent: loggedAsSend,
           rpe: _rpe,
           completionPercent: _completionPercent ?? 100,
           notes: _climbNotes?.trim().isEmpty == true ? null : _climbNotes?.trim(),
@@ -140,8 +146,10 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     _invalidateProjectProgress();
     _resetTags();
 
-    if (mounted) {
+    if (loggedAsSend && mounted) {
       _showPostSendDialog();
+    } else if (mounted) {
+      ref.read(activeSessionProvider.notifier).nextAttempt();
     }
   }
 
@@ -361,8 +369,8 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     ref.invalidate(sessionListProvider);
     ref.invalidate(gymSessionsProvider(state.gymId));
     ref.invalidate(allClimbsProvider);
-    // Push pending changes to Supabase in the background
-    triggerPushSync(ref);
+    // Push pending changes to Supabase (wait for completion)
+    await triggerPushSync(ref);
     if (mounted) context.go('/session-log');
   }
 

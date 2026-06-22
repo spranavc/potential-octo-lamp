@@ -1,4 +1,5 @@
 import 'package:drift/drift.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 import '../../data/database/database.dart';
@@ -51,8 +52,9 @@ class SyncService {
     try {
       await supabase.from('gyms').upsert(batch);
       await _markSynced(db.gyms, rows.map((g) => g.id).toList(), now);
-    } catch (_) {
-      // Leave syncStatus as 'pending' so a future pushAll retries.
+      debugPrint('[Sync] Pushed ${batch.length} gyms');
+    } catch (e) {
+      debugPrint('[Sync] pushGyms failed: $e');
     }
   }
 
@@ -80,8 +82,9 @@ class SyncService {
     try {
       await supabase.from('sessions').upsert(batch);
       await _markSynced(db.sessions, rows.map((s) => s.id).toList(), now);
-    } catch (_) {
-      // Leave syncStatus as 'pending' so a future pushAll retries.
+      debugPrint('[Sync] Pushed ${batch.length} sessions');
+    } catch (e) {
+      debugPrint('[Sync] pushSessions failed: $e');
     }
   }
 
@@ -114,8 +117,9 @@ class SyncService {
     try {
       await supabase.from('climbs').upsert(batch);
       await _markSynced(db.climbs, rows.map((c) => c.id).toList(), now);
-    } catch (_) {
-      // Leave syncStatus as 'pending' so a future pushAll retries.
+      debugPrint('[Sync] Pushed ${batch.length} climbs');
+    } catch (e) {
+      debugPrint('[Sync] pushClimbs failed: $e');
     }
   }
 
@@ -146,8 +150,9 @@ class SyncService {
     try {
       await supabase.from('projects').upsert(batch);
       await _markSynced(db.projects, rows.map((p) => p.id).toList(), now);
-    } catch (_) {
-      // Leave syncStatus as 'pending' so a future pushAll retries.
+      debugPrint('[Sync] Pushed ${batch.length} projects');
+    } catch (e) {
+      debugPrint('[Sync] pushProjects failed: $e');
     }
   }
 
@@ -169,6 +174,8 @@ class SyncService {
           .from('gyms')
           .select()
           .eq('user_id', userId) as List<dynamic>;
+
+      debugPrint('[Sync] Pulled ${data.length} gyms from Supabase');
 
       if (data.isEmpty) return;
 
@@ -209,8 +216,8 @@ class SyncService {
           );
         }
       }
-    } catch (_) {
-      // Network failure — nothing to flush locally, retry on next pullAll.
+    } catch (e) {
+      debugPrint('[Sync] pullGyms failed: $e');
     }
   }
 
@@ -220,6 +227,8 @@ class SyncService {
           .from('sessions')
           .select()
           .eq('user_id', userId) as List<dynamic>;
+
+      debugPrint('[Sync] Pulled ${data.length} sessions from Supabase');
 
       if (data.isEmpty) return;
 
@@ -263,8 +272,8 @@ class SyncService {
           );
         }
       }
-    } catch (_) {
-      // Network failure — nothing to flush locally, retry on next pullAll.
+    } catch (e) {
+      debugPrint('[Sync] pullSessions failed: $e');
     }
   }
 
@@ -274,6 +283,8 @@ class SyncService {
           .from('climbs')
           .select()
           .eq('user_id', userId) as List<dynamic>;
+
+      debugPrint('[Sync] Pulled ${data.length} climbs from Supabase');
 
       if (data.isEmpty) return;
 
@@ -328,8 +339,8 @@ class SyncService {
           );
         }
       }
-    } catch (_) {
-      // Network failure — nothing to flush locally, retry on next pullAll.
+    } catch (e) {
+      debugPrint('[Sync] pullClimbs failed: $e');
     }
   }
 
@@ -339,6 +350,8 @@ class SyncService {
           .from('projects')
           .select()
           .eq('user_id', userId) as List<dynamic>;
+
+      debugPrint('[Sync] Pulled ${data.length} projects from Supabase');
 
       if (data.isEmpty) return;
 
@@ -388,8 +401,8 @@ class SyncService {
           );
         }
       }
-    } catch (_) {
-      // Network failure — nothing to flush locally, retry on next pullAll.
+    } catch (e) {
+      debugPrint('[Sync] pullProjects failed: $e');
     }
   }
 
