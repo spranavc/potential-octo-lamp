@@ -68,10 +68,10 @@ class ProfileScreen extends ConsumerWidget {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete All Data'),
+        title: const Text('Sync with Boldr'),
         content: const Text(
-          'This will permanently delete all your local data and re-pull '
-          'from Boldr. This cannot be undone.',
+          'This will replace all local data with the latest data from Boldr servers. '
+          'Any unsynced local changes will be pushed first.',
         ),
         actions: [
           TextButton(
@@ -80,8 +80,7 @@ class ProfileScreen extends ConsumerWidget {
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, true),
-            style: FilledButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete All Data'),
+            child: const Text('Sync Now'),
           ),
         ],
       ),
@@ -122,7 +121,7 @@ class ProfileScreen extends ConsumerWidget {
 
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Data refreshed from Boldr')),
+        const SnackBar(content: Text('Synced with Boldr')),
       );
     }
   }
@@ -177,9 +176,9 @@ class ProfileScreen extends ConsumerWidget {
             onTap: () => _exportData(ref, context),
           ),
           ListTile(
-            leading: const Icon(Icons.delete_outline, color: Colors.red),
-            title: const Text('Delete All Data', style: TextStyle(color: Colors.red)),
-            subtitle: const Text('Wipe local data and re-pull from Boldr'),
+            leading: const Icon(Icons.sync),
+            title: const Text('Sync with Boldr'),
+            subtitle: const Text('Pull latest data from Boldr servers'),
             onTap: () => _deleteAllData(ref, context),
           ),
           const Divider(),

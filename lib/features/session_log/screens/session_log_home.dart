@@ -1,16 +1,33 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
 
 import '../../../data/database/database.dart';
 import '../../../data/providers/repository_providers.dart';
+import '../../../features/analytics/providers/analytics_providers.dart';
+import '../../../features/sync/providers/sync_providers.dart';
 import '../../../shared/utils/time_format.dart';
 import '../../gyms/providers/gym_providers.dart';
+import '../../projects/providers/project_providers.dart';
 import '../providers/session_list_provider.dart';
 import '../providers/active_session_provider.dart';
 
 class SessionLogHome extends ConsumerWidget {
   const SessionLogHome({super.key});
+
+  Future<void> _refreshFromBoldr(WidgetRef ref) async {
+    final userId = Supabase.instance.client.auth.currentUser?.id;
+    if (userId == null) return;
+    try {
+      final syncService = ref.read(syncServiceProvider);
+      await syncService.fullSync(userId);
+      ref.invalidate(sessionListProvider);
+      ref.invalidate(gymListProvider);
+      ref.invalidate(projectListProvider);
+      ref.invalidate(allClimbsProvider);
+    } catch (_) {}
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -21,6 +38,11 @@ class SessionLogHome extends ConsumerWidget {
       appBar: AppBar(
         title: const Text('Session Log'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.sync),
+            tooltip: 'Sync with Boldr',
+            onPressed: () => _refreshFromBoldr(ref),
+          ),
           IconButton(
             icon: const Icon(Icons.rocket_launch),
             tooltip: 'Projects',
@@ -34,7 +56,9 @@ class SessionLogHome extends ConsumerWidget {
             ),
         ],
       ),
-      body: sessionsAsync.when(
+      body: RefreshIndicator(
+        onRefresh: () => _refreshFromBoldr(ref),
+        child: sessionsAsync.when(
         data: (sessions) {
           if (sessions.isEmpty && !isLogging) {
             return _EmptyState(onStart: () => context.go('/session-log/active'));
@@ -69,6 +93,7 @@ class SessionLogHome extends ConsumerWidget {
         },
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (err, _) => Center(child: Text('Error: $err')),
+      ),
       ),
       floatingActionButton: isLogging
           ? null

@@ -57,16 +57,15 @@ class GradePyramidChart extends StatelessWidget {
             bottomTitles: AxisTitles(
               sideTitles: SideTitles(
                 showTitles: true,
-                reservedSize: 28,
+                reservedSize: 32,
                 getTitlesWidget: (value, meta) {
                   final i = value.toInt();
-                  // Show every other label to avoid crowding
-                  if (i % 2 == 0) {
+                  if (i >= 0 && i <= 17) {
                     return Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text(
                         'V$i',
-                        style: const TextStyle(fontSize: 11),
+                        style: const TextStyle(fontSize: 10),
                       ),
                     );
                   }
@@ -74,8 +73,22 @@ class GradePyramidChart extends StatelessWidget {
                 },
               ),
             ),
-            leftTitles: const AxisTitles(
-              sideTitles: SideTitles(showTitles: false),
+            leftTitles: AxisTitles(
+              sideTitles: SideTitles(
+                showTitles: true,
+                reservedSize: 28,
+                interval: 1,
+                getTitlesWidget: (value, meta) {
+                  if (value == meta.min) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 4),
+                    child: Text(
+                      value.toInt().toString(),
+                      style: const TextStyle(fontSize: 10, color: Colors.grey),
+                    ),
+                  );
+                },
+              ),
             ),
             topTitles: const AxisTitles(
               sideTitles: SideTitles(showTitles: false),
