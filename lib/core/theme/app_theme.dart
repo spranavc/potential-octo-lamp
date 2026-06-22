@@ -57,6 +57,7 @@ class AppTheme {
           fontSize: 28,
           fontWeight: FontWeight.bold,
           letterSpacing: -0.5,
+          color: Color(0xFF81C784),
         ),
       ),
       cardTheme: CardThemeData(

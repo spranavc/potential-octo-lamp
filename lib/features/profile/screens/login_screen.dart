@@ -50,7 +50,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Login')),
+      appBar: AppBar(
+        centerTitle: true,
+        title: const Text('Welcome to Boldr'),
+      ),
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -63,8 +66,10 @@ class _LoginScreenState extends State<LoginScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Welcome Back',
-                    style: Theme.of(context).textTheme.headlineSmall,
+                    'Track your climbs. Get better. Be Boldr.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: Colors.grey,
+                        ),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: 32),

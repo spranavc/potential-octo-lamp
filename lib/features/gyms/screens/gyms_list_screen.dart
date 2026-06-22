@@ -177,7 +177,7 @@ class _MyGymsTab extends ConsumerWidget {
                   const Icon(Icons.fitness_center, size: 72, color: Colors.grey),
                   const SizedBox(height: 20),
                   const Text(
-                    'Welcome to Bolder!',
+                    'Welcome to Boldr!',
                     style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),

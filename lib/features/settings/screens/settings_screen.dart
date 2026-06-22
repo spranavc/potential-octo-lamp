@@ -25,11 +25,11 @@ class SettingsScreen extends StatelessWidget {
           ListTile(
             leading: const Icon(Icons.info_outline),
             title: const Text('About'),
-            subtitle: const Text('Bolder v1.0.0'),
+            subtitle: const Text('Boldr v1.0.0'),
             onTap: () {
               showAboutDialog(
                 context: context,
-                applicationName: 'Bolder',
+                applicationName: 'Boldr',
                 applicationVersion: '1.0.0',
                 children: [
                   const Padding(
