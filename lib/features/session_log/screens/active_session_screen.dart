@@ -237,7 +237,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
 
     if (!mounted) return;
 
-    final action = await showModalBottomSheet<String>(
+    await showModalBottomSheet<String>(
       context: context,
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -349,14 +349,6 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     }
   }
 
-  void _resetForm() {
-    setState(() {
-      _selectedTagIds = [];
-      _rpe = null;
-      _completionPercent = null;
-      _climbNotes = null;
-    });
-  }
 
   Future<void> _endSession() async {
     final state = ref.read(activeSessionProvider);

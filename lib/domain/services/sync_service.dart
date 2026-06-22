@@ -66,6 +66,9 @@ class SyncService {
 
     if (rows.isEmpty) return;
 
+    // Ensure all referenced gyms exist in Supabase first
+    await _ensureGymsPushed(rows.map((s) => s.gymId).toSet().toList(), userId);
+
     final now = DateTime.now();
     final batch = rows.map((s) => {
           'id': s.id,
@@ -95,6 +98,9 @@ class SyncService {
         .get();
 
     if (rows.isEmpty) return;
+
+    // Ensure all referenced sessions exist in Supabase first
+    await _ensureSessionsPushed(rows.map((c) => c.sessionId).toSet().toList(), userId);
 
     final now = DateTime.now();
     final batch = rows.map((c) => {
@@ -130,6 +136,12 @@ class SyncService {
         .get();
 
     if (rows.isEmpty) return;
+
+    // Ensure all referenced gyms exist in Supabase first
+    await _ensureGymsPushed(rows.map((p) => p.gymId).toSet().toList(), userId);
+
+    // And referenced climbs too (if any are linked via project_climbs)
+    // For now projects are created before climbs are linked, so just ensure gyms.
 
     final now = DateTime.now();
     final batch = rows.map((p) => {
@@ -419,6 +431,63 @@ class SyncService {
   // ---------------------------------------------------------------------------
   // Internal helpers
   // ---------------------------------------------------------------------------
+
+  /// Ensure [gymIds] exist in Supabase. Pushes any missing gyms from local DB.
+  Future<void> _ensureGymsPushed(List<int> gymIds, String userId) async {
+    if (gymIds.isEmpty) return;
+    final rows = await (db.select(db.gyms)
+          ..where((g) => g.id.isIn(gymIds) & g.userId.equals(userId)))
+        .get();
+    if (rows.isEmpty) return;
+    final now = DateTime.now();
+    final batch = rows.map((g) => {
+          'id': g.id,
+          'name': g.name,
+          'user_id': g.userId,
+          'latitude': g.latitude,
+          'longitude': g.longitude,
+          'created_at': g.createdAt.toIso8601String(),
+          'updated_at': now.toIso8601String(),
+        }).toList();
+    try {
+      await supabase.from('gyms').upsert(batch);
+      debugPrint('[Sync] Ensured ${batch.length} gyms pushed');
+    } catch (e) {
+      debugPrint('[Sync] _ensureGymsPushed failed: $e');
+    }
+  }
+
+  /// Ensure [sessionIds] exist in Supabase. Pushes any missing sessions (and
+  /// their gyms) from local DB.
+  Future<void> _ensureSessionsPushed(List<int> sessionIds, String userId) async {
+    if (sessionIds.isEmpty) return;
+    // Push any missing gyms first
+    final sessionRows = await (db.select(db.sessions)
+          ..where((s) => s.id.isIn(sessionIds) & s.userId.equals(userId)))
+        .get();
+    if (sessionRows.isEmpty) return;
+    await _ensureGymsPushed(
+        sessionRows.map((s) => s.gymId).toSet().toList(), userId);
+
+    final now = DateTime.now();
+    final batch = sessionRows.map((s) => {
+          'id': s.id,
+          'gym_id': s.gymId,
+          'wall_id': s.wallId,
+          'started_at': s.startedAt.toIso8601String(),
+          'ended_at': s.endedAt?.toIso8601String(),
+          'notes': s.notes,
+          'user_id': s.userId,
+          'created_at': s.createdAt.toIso8601String(),
+          'updated_at': now.toIso8601String(),
+        }).toList();
+    try {
+      await supabase.from('sessions').upsert(batch);
+      debugPrint('[Sync] Ensured ${batch.length} sessions pushed');
+    } catch (e) {
+      debugPrint('[Sync] _ensureSessionsPushed failed: $e');
+    }
+  }
 
   /// Mark rows matching [ids] as 'synced' with the given [updatedAt].
   Future<void> _markSynced<T extends Table, D>(

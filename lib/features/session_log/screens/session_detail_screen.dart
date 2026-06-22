@@ -597,7 +597,7 @@ class _EditClimbDialogState extends State<_EditClimbDialog> {
               title: Text(_sent ? 'SEND' : 'FAIL'),
               subtitle: const Text('Tap to toggle'),
               value: _sent,
-              activeColor: Colors.green,
+              activeThumbColor: Colors.green,
               inactiveTrackColor: Colors.red.shade200,
               onChanged: (v) => setState(() => _sent = v),
             ),

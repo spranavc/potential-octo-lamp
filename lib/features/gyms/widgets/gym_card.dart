@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../data/database/database.dart';
-import '../../../data/providers/repository_providers.dart';
 import '../../projects/providers/project_providers.dart';
 
 class GymCard extends ConsumerWidget {
