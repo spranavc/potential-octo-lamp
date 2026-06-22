@@ -52,7 +52,7 @@ class _SessionDetailScreenState extends ConsumerState<SessionDetailScreen> {
             title: const Text('Delete Climb'),
             content: Text(
                 'Delete this ${climb.sent ? 'SEND' : 'FAIL'} '
-                '(${climb.gradeSystem} ${climb.gradeValue})? This cannot be undone.'),
+                '(${climb.gradeValue})? This cannot be undone.'),
             actions: [
               TextButton(
                   onPressed: () => Navigator.pop(ctx, false),
@@ -262,7 +262,7 @@ class _ClimbCard extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  '${climb.gradeSystem} ${climb.gradeValue}',
+                  '${climb.gradeValue}',
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
@@ -595,11 +595,15 @@ class _EditClimbDialogState extends State<_EditClimbDialog> {
             // Send / Fail toggle
             SwitchListTile(
               title: Text(_sent ? 'SEND' : 'FAIL'),
-              subtitle: const Text('Tap to toggle'),
+              subtitle: Text(_sent ? 'Tap to mark as fail' : 'Tap to mark as send'),
               value: _sent,
               activeThumbColor: Colors.green,
               inactiveTrackColor: Colors.red.shade200,
-              onChanged: (v) => setState(() => _sent = v),
+              onChanged: (v) => setState(() {
+                _sent = v;
+                // Changing to send → completion should be 100%
+                if (v) _completionPercent = 100;
+              }),
             ),
 
             // Attempts

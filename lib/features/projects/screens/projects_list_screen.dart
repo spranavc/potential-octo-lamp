@@ -42,25 +42,38 @@ class ProjectsListScreen extends ConsumerWidget {
       appBar: AppBar(title: const Text('Projects')),
       body: projectsAsync.when(
         data: (projects) {
+          // Empty state
           if (projects.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.rocket_launch, size: 64, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text('No projects yet', style: TextStyle(fontSize: 18, color: Colors.grey)),
-                  SizedBox(height: 8),
-                  Text('Create a project to track a specific climb', style: TextStyle(color: Colors.grey)),
-                ],
-              ),
+            return ListView(
+              children: [
+                _buildDescription(context),
+                const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.rocket_launch, size: 64, color: Colors.grey),
+                      SizedBox(height: 16),
+                      Text('No projects yet', style: TextStyle(fontSize: 18, color: Colors.grey)),
+                      SizedBox(height: 8),
+                      Text('Tap + to create your first project', style: TextStyle(color: Colors.grey)),
+                    ],
+                  ),
+                ),
+              ],
             );
           }
+          // With projects
           return ListView.builder(
             padding: const EdgeInsets.all(16),
-            itemCount: projects.length,
+            itemCount: projects.length + 1,
             itemBuilder: (context, index) {
-              final project = projects[index];
+              if (index == 0) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 12),
+                  child: _buildDescription(context),
+                );
+              }
+              final project = projects[index - 1];
               return Dismissible(
                 key: Key('project-${project.id}'),
                 direction: DismissDirection.endToStart,
@@ -122,6 +135,34 @@ Future<void> _deleteProject(WidgetRef ref, Project project) async {
   final repo = ref.read(projectRepositoryProvider);
   await repo.delete(project.id);
   ref.invalidate(projectListProvider);
+}
+
+Widget _buildDescription(BuildContext context) {
+  return Container(
+    margin: const EdgeInsets.symmetric(horizontal: 16),
+    padding: const EdgeInsets.all(14),
+    decoration: BoxDecoration(
+      color: Colors.deepOrange.withAlpha(15),
+      borderRadius: BorderRadius.circular(12),
+      border: Border.all(color: Colors.deepOrange.withAlpha(50)),
+    ),
+    child: Row(
+      children: [
+        const Icon(Icons.info_outline, color: Colors.deepOrange, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            'A project is a climb you\'re working on across multiple sessions — '
+            'like sending that V5 in the cave. Log attempts against it and track '
+            'your progress over time.',
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: Colors.grey[700],
+                ),
+          ),
+        ),
+      ],
+    ),
+  );
 }
 
 class _AddProjectResult {
