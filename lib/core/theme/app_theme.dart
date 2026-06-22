@@ -17,7 +17,12 @@ class AppTheme {
         brightness: Brightness.light,
       ),
       appBarTheme: const AppBarTheme(
-        centerTitle: true,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          letterSpacing: -0.5,
+        ),
       ),
       cardTheme: CardThemeData(
         elevation: 2,
@@ -47,7 +52,12 @@ class AppTheme {
         brightness: Brightness.dark,
       ),
       appBarTheme: const AppBarTheme(
-        centerTitle: true,
+        centerTitle: false,
+        titleTextStyle: TextStyle(
+          fontSize: 28,
+          fontWeight: FontWeight.bold,
+          letterSpacing: -0.5,
+        ),
       ),
       cardTheme: CardThemeData(
         elevation: 2,
