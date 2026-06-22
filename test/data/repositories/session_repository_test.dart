@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:climbapp/data/database/database.dart';
-import 'package:climbapp/data/repositories/session_repository.dart';
+import 'package:bolder/data/database/database.dart';
+import 'package:bolder/data/repositories/session_repository.dart';
 
 import '../test_helpers.dart';
 

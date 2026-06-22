@@ -28,7 +28,7 @@ int APIENTRY wWinMain(_In_ HINSTANCE instance, _In_opt_ HINSTANCE prev,
   Win32Window::Point origin(10, 10);
   // iPhone 14/15 Pro size (~390x844 logical, plus title bar)
   Win32Window::Size size(390, 844);
-  if (!window.Create(L"climbapp", origin, size)) {
+  if (!window.Create(L"bolder", origin, size)) {
     return EXIT_FAILURE;
   }
   window.SetQuitOnClose(true);

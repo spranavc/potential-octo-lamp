@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:climbapp/data/database/database.dart';
-import 'package:climbapp/domain/services/analytics_service.dart';
+import 'package:bolder/data/database/database.dart';
+import 'package:bolder/domain/services/analytics_service.dart';
 
 Climb _makeClimb({
   int id = 1,

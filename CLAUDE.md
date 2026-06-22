@@ -4,7 +4,7 @@
 
 ## What This Project Is
 
-**ClimbApp** — bouldering progress tracker. Log climbs, track grade progression, manage gyms and projects, visualize analytics.
+**Bolder** — bouldering progress tracker. Log climbs, track grade progression, manage gyms and projects, visualize analytics.
 
 | Layer | Tech | Version |
 |---|---|---|
@@ -260,7 +260,7 @@ flutter test                             # Run tests
 MSYS_NO_PATHCONV=1 flutter build web --base-href "/"
 python -m http.server 8081 -d build/web
 
-bash scripts/reset_db.sh                # Delete ~/Documents/climbapp.sqlite
+bash scripts/reset_db.sh                # Delete ~/Documents/bolder.sqlite
 bash scripts/setup.sh                    # Full setup: pub get → codegen → analyze → test
 bash scripts/deploy_web.sh              # Build + deploy to gh-pages
 ```

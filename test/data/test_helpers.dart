@@ -3,7 +3,7 @@ import 'package:drift/native.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:climbapp/data/database/database.dart';
+import 'package:bolder/data/database/database.dart';
 
 bool _supabaseInitialized = false;
 

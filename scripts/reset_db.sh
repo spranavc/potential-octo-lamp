@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Reset the ClimbApp database — deletes the SQLite file for a fresh start.
+# Reset the Bolder database — deletes the SQLite file for a fresh start.
 # Usage: bash scripts/reset_db.sh
 set -euo pipefail
 
-DB_FILE="$HOME/Documents/climbapp.sqlite"
+DB_FILE="$HOME/Documents/bolder.sqlite"
 
 if [ -f "$DB_FILE" ]; then
   rm "$DB_FILE"

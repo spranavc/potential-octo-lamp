@@ -182,12 +182,16 @@ class SyncService {
 
   Future<void> pullGyms(String userId) async {
     try {
+      debugPrint('[Sync] pullGyms: querying for userId=$userId');
       final data = await supabase
           .from('gyms')
           .select()
           .eq('user_id', userId) as List<dynamic>;
 
       debugPrint('[Sync] Pulled ${data.length} gyms from Supabase');
+      if (data.isNotEmpty) {
+        debugPrint('[Sync] First gym: ${_asMap(data.first)}');
+      }
 
       if (data.isEmpty) return;
 
@@ -235,12 +239,17 @@ class SyncService {
 
   Future<void> pullSessions(String userId) async {
     try {
+      debugPrint('[Sync] pullSessions: querying for userId=$userId');
       final data = await supabase
           .from('sessions')
           .select()
           .eq('user_id', userId) as List<dynamic>;
 
       debugPrint('[Sync] Pulled ${data.length} sessions from Supabase');
+      if (data.isNotEmpty) {
+        debugPrint('[Sync] First session keys: ${_asMap(data.first).keys}');
+        debugPrint('[Sync] First session: ${_asMap(data.first)}');
+      }
 
       if (data.isEmpty) return;
 

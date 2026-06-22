@@ -1,4 +1,4 @@
-package com.bouldering.climbapp
+package com.bouldering.bolder
 
 import io.flutter.embedding.android.FlutterActivity
 

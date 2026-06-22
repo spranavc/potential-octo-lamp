@@ -5,9 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'package:climbapp/app.dart';
-import 'package:climbapp/data/database/database.dart';
-import 'package:climbapp/data/providers/database_provider.dart';
+import 'package:bolder/app.dart';
+import 'package:bolder/data/database/database.dart';
+import 'package:bolder/data/providers/database_provider.dart';
 
 AppDatabase _createTestDb() {
   return AppDatabase.fromConnection(
@@ -40,7 +40,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [databaseProvider.overrideWithValue(db)],
-        child: const ClimbApp(),
+        child: const Bolder(),
       ),
     );
     await tester.pumpAndSettle();
@@ -57,7 +57,7 @@ void main() {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [databaseProvider.overrideWithValue(db)],
-        child: const ClimbApp(),
+        child: const Bolder(),
       ),
     );
     await tester.pumpAndSettle();

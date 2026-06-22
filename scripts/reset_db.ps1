@@ -1,7 +1,7 @@
-﻿# Reset the ClimbApp database — deletes the SQLite file for a fresh start.
+﻿# Reset the Bolder database — deletes the SQLite file for a fresh start.
 # Usage: .\scripts\reset_db.ps1
 
-$dbFile = "$env:USERPROFILE\Documents\climbapp.sqlite"
+$dbFile = "$env:USERPROFILE\Documents\bolder.sqlite"
 
 if (Test-Path $dbFile) {
     Remove-Item $dbFile -Force

@@ -1,10 +1,10 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:climbapp/data/database/database.dart';
-import 'package:climbapp/data/providers/database_provider.dart';
-import 'package:climbapp/data/providers/repository_providers.dart';
-import 'package:climbapp/features/gyms/providers/gym_providers.dart';
+import 'package:bolder/data/database/database.dart';
+import 'package:bolder/data/providers/database_provider.dart';
+import 'package:bolder/data/providers/repository_providers.dart';
+import 'package:bolder/features/gyms/providers/gym_providers.dart';
 
 import '../../data/test_helpers.dart';
 

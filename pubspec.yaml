@@ -1,4 +1,4 @@
-name: climbapp
+name: bolder
 description: "Bouldering progress tracking app — log sessions, track grades, visualize progress."
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.

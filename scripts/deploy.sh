@@ -10,7 +10,7 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-LOG_DIR="$HOME/climbapp-logs"
+LOG_DIR="$HOME/bolder-logs"
 mkdir -p "$LOG_DIR"
 LOG_FILE="$LOG_DIR/deploy-$(date +%Y%m%d-%H%M%S).log"
 exec > >(tee -a "$LOG_FILE") 2>&1

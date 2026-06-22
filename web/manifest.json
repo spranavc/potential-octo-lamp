@@ -1,6 +1,6 @@
 {
-    "name": "climbapp",
-    "short_name": "climbapp",
+    "name": "bolder",
+    "short_name": "bolder",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#0175C2",
