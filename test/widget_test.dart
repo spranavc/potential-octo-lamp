@@ -46,7 +46,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // Without a session, redirect to /login
-    expect(find.text('Welcome Back'), findsOneWidget);
+    expect(find.text('Welcome to Boldr'), findsOneWidget);
     expect(find.text("Don't have an account? Sign Up"), findsOneWidget);
   });
 

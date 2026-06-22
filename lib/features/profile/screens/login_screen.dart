@@ -1,6 +1,12 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:go_router/go_router.dart';
+
+/// Dev account credentials for Playwright / local testing.
+/// Only compiled into debug builds.
+const _kDevEmail = String.fromEnvironment('BDR_TEST_EMAIL');
+const _kDevPass = String.fromEnvironment('BDR_TEST_PASS');
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -14,6 +20,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
   String? _error;
 
   @override
@@ -21,6 +28,26 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Dev auto-login for local testing.
+    // Build with: flutter build web --dart-define=BDR_TEST_EMAIL=... --dart-define=BDR_TEST_PASS=...
+    // Then navigate to /login?bdr_test=1
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      try {
+        final routeName = ModalRoute.of(context)?.settings.name;
+        if (routeName != null && Uri.parse(routeName).queryParameters['bdr_test'] == '1') {
+          if (_kDevEmail.isNotEmpty && _kDevPass.isNotEmpty) {
+            _emailController.text = _kDevEmail;
+            _passwordController.text = _kDevPass;
+            _login();
+          }
+        }
+      } catch (_) {}
+    });
   }
 
   Future<void> _login() async {
@@ -110,11 +137,18 @@ class _LoginScreenState extends State<LoginScreen> {
                   const SizedBox(height: 16),
                   TextFormField(
                     controller: _passwordController,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       labelText: 'Password',
-                      prefixIcon: Icon(Icons.lock_outlined),
+                      prefixIcon: const Icon(Icons.lock_outlined),
+                      suffixIcon: IconButton(
+                        icon: Icon(_obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility),
+                        onPressed: () =>
+                            setState(() => _obscurePassword = !_obscurePassword),
+                      ),
                     ),
-                    obscureText: true,
+                    obscureText: _obscurePassword,
                     textInputAction: TextInputAction.done,
                     onFieldSubmitted: (_) => _login(),
                     validator: (value) {

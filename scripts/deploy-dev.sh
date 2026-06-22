@@ -3,11 +3,23 @@ set -euo pipefail
 
 echo "=== Dev Preview  $(date) ==="
 
+# Dev account credentials (set these in your shell profile)
+DEV_EMAIL="${BDR_TEST_EMAIL:-}"
+DEV_PASS="${BDR_TEST_PASS:-}"
+
 echo "=> Building web app (release mode, base-href /)..."
-MSYS_NO_PATHCONV=1 flutter build web --base-href "/"
+if [[ -n "$DEV_EMAIL" ]] && [[ -n "$DEV_PASS" ]]; then
+  echo "   Dev auto-login enabled for Playwright testing"
+  MSYS_NO_PATHCONV=1 flutter build web --base-href "/" \
+    --dart-define="BDR_TEST_EMAIL=$DEV_EMAIL" \
+    --dart-define="BDR_TEST_PASS=$DEV_PASS"
+else
+  MSYS_NO_PATHCONV=1 flutter build web --base-href "/"
+fi
 
 echo ""
 echo "=> Starting local server at http://localhost:8081"
+echo "   Dev test URL: http://localhost:8081/#/login?bdr_test=1"
 echo "   Press Ctrl+C to stop"
 echo ""
 # Try every Python variant on the system

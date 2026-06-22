@@ -1,4 +1,4 @@
-import 'package:drift/drift.dart' show Value;
+import 'package:drift/drift.dart' show Value, Variable;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -51,6 +51,17 @@ class GymsListScreen extends ConsumerWidget {
     final userId = Supabase.instance.client.auth.currentUser?.id;
     if (userId == null) return;
     final db = ref.read(databaseProvider);
+
+    // Prevent duplicate — check if user already has a gym with this name
+    final existing = await db.customSelect(
+      'SELECT id FROM gyms WHERE name = ? AND user_id = ? LIMIT 1',
+      variables: [
+        Variable.withString(gym.name),
+        Variable.withString(userId),
+      ],
+    ).getSingleOrNull();
+    if (existing != null) return;
+
     await db.into(db.gyms).insert(
       GymsCompanion.insert(
         name: gym.name,

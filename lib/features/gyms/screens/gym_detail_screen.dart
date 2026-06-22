@@ -1,3 +1,4 @@
+import 'package:drift/drift.dart' show Variable;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -459,6 +460,24 @@ Future<void> _addToMyGyms(BuildContext context, WidgetRef ref, Gym gym) async {
   final userId = Supabase.instance.client.auth.currentUser?.id;
   if (userId == null) return;
   final db = ref.read(databaseProvider);
+
+  // Prevent duplicate — check if user already has this gym
+  final existing = await db.customSelect(
+    'SELECT id FROM gyms WHERE name = ? AND user_id = ? LIMIT 1',
+    variables: [
+      Variable.withString(gym.name),
+      Variable.withString(userId),
+    ],
+  ).getSingleOrNull();
+  if (existing != null) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('This gym is already in My Gyms')),
+      );
+    }
+    return;
+  }
+
   await db.gymsDao.updateUserId(gym.id, userId);
   ref.invalidate(myGymsProvider);
   ref.invalidate(directoryGymsProvider);
