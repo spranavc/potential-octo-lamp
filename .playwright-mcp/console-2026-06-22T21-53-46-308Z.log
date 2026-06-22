@@ -1,0 +1,9 @@
+[     801ms] [LOG] [Sync] pullGyms: querying for userId=f67dbe3f-3645-456c-8429-139f51c6552a @ http://localhost:8081/main.dart.js:35692
+[    1666ms] [LOG] [Sync] Pulled 1 gyms from Supabase @ http://localhost:8081/main.dart.js:35692
+[    1666ms] [LOG] [Sync] First gym: {id: 2, user_id: f67dbe3f-3645-456c-8429-139f51c6552a, name: Demo Gym, latitude: null, longitude: null, sync_status: synced, created_at: 2026-06-22T08:05:09+00:00, updated_at: 2026-06-22T21:49:30.56284+00:00} @ http://localhost:8081/main.dart.js:35692
+[    1674ms] [LOG] [Sync] pullSessions: querying for userId=f67dbe3f-3645-456c-8429-139f51c6552a @ http://localhost:8081/main.dart.js:35692
+[    2024ms] [LOG] [Sync] Pulled 7 sessions from Supabase @ http://localhost:8081/main.dart.js:35692
+[    2024ms] [LOG] [Sync] First session keys: (id, user_id, gym_id, wall_id, started_at, ..., created_at, updated_at) @ http://localhost:8081/main.dart.js:35692
+[    2024ms] [LOG] [Sync] First session: {id: 1, user_id: f67dbe3f-3645-456c-8429-139f51c6552a, gym_id: 2, wall_id: null, started_at: 2026-06-07T16:05:10.972652+00:00, ended_at: 2026-06-07T17:35:10.972652+00:00, notes: null, sync_status: synced, created_at: 2026-06-07T16:05:10.972652+00:00, updated_at: 2026-06-07T16:05:10.972652+00:00} @ http://localhost:8081/main.dart.js:35692
+[    2193ms] [LOG] [Sync] Pulled 17 climbs from Supabase @ http://localhost:8081/main.dart.js:35692
+[    2369ms] [LOG] [Sync] Pulled 1 projects from Supabase @ http://localhost:8081/main.dart.js:35692
