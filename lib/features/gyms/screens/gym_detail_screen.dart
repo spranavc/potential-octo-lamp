@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' show Supabase;
+import 'package:url_launcher/url_launcher.dart';
 
 import '../../../data/database/database.dart';
+import '../../../data/providers/database_provider.dart';
 import '../../../data/providers/repository_providers.dart';
 import '../../../shared/utils/time_format.dart';
 import '../../projects/providers/project_providers.dart';
@@ -60,6 +62,74 @@ class GymDetailScreen extends ConsumerWidget {
                 ),
               ),
               const SizedBox(height: 16),
+
+              // ── Rich metadata for directory gyms ──────────────────────
+              if (_hasRichMetadata(displayGym)) ...[
+                if (displayGym.isDirectory && displayGym.userId == null)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: FilledButton.icon(
+                      onPressed: () => _addToMyGyms(context, ref, displayGym),
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add to My Gyms'),
+                      style: FilledButton.styleFrom(
+                        minimumSize: const Size(double.infinity, 44),
+                      ),
+                    ),
+                  ),
+                if (displayGym.description != null &&
+                    displayGym.description!.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: Text(displayGym.description!,
+                        style: Theme.of(context).textTheme.bodyMedium),
+                  ),
+                _InfoSection(
+                  children: [
+                    if (displayGym.rating != null)
+                      _InfoRow(
+                        icon: Icons.star,
+                        label: '${displayGym.rating!.toStringAsFixed(1)} (${displayGym.ratingCount ?? 0} reviews)',
+                        color: Colors.amber,
+                      ),
+                    if (displayGym.address != null &&
+                        displayGym.address!.trim().isNotEmpty)
+                      _InfoRow(
+                        icon: Icons.location_on,
+                        label: displayGym.address!,
+                        onTap: () => _openMaps(displayGym.address!),
+                      ),
+                    if (displayGym.dayPassPrice != null &&
+                        displayGym.dayPassPrice!.trim().isNotEmpty)
+                      _InfoRow(
+                        icon: Icons.confirmation_number,
+                        label: 'Day Pass: ${displayGym.dayPassPrice!}',
+                      ),
+                    if (displayGym.phone != null &&
+                        displayGym.phone!.trim().isNotEmpty)
+                      _InfoRow(
+                        icon: Icons.phone,
+                        label: displayGym.phone!,
+                        onTap: () => launchUrl(Uri.parse('tel:${displayGym.phone!}')),
+                      ),
+                    if (displayGym.website != null &&
+                        displayGym.website!.trim().isNotEmpty)
+                      _InfoRow(
+                        icon: Icons.language,
+                        label: displayGym.website!,
+                        onTap: () => _openUrl(displayGym.website!),
+                      ),
+                    if (displayGym.hours != null &&
+                        displayGym.hours!.trim().isNotEmpty)
+                      _InfoRow(
+                        icon: Icons.access_time,
+                        label: displayGym.hours!,
+                      ),
+                  ],
+                ),
+                _AmenitiesSection(gym: displayGym),
+                const Divider(height: 24),
+              ],
 
               // ── Projects section ──────────────────────────────────────
               const _SectionHeader(title: 'Active Projects'),
@@ -342,9 +412,148 @@ class _SectionHeader extends StatelessWidget {
         children: [
           Text(title, style: Theme.of(context).textTheme.titleMedium),
           const Spacer(),
-          ?trailing,
+          if (trailing != null) trailing!,
         ],
       ),
     );
   }
+}
+
+// ── Rich metadata helpers ─────────────────────────────────────────────────
+
+/// Whether the gym has any rich metadata worth showing.
+bool _hasRichMetadata(Gym gym) {
+  return gym.isDirectory ||
+      gym.address != null ||
+      gym.rating != null ||
+      gym.phone != null ||
+      gym.website != null ||
+      gym.hours != null ||
+      gym.dayPassPrice != null ||
+      gym.description != null ||
+      gym.hasBouldering == true ||
+      gym.hasTopRope == true ||
+      gym.hasLead == true ||
+      gym.hasAutoBelay == true ||
+      gym.hasTrainingArea == true ||
+      gym.hasYoga == true ||
+      gym.hasProShop == true ||
+      gym.hasCafe == true ||
+      gym.hasShowers == true ||
+      gym.hasParking == true;
+}
+
+Future<void> _openMaps(String address) async {
+  final encoded = Uri.encodeComponent(address);
+  final uri = Uri.parse('https://maps.google.com/?q=$encoded');
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+Future<void> _openUrl(String url) async {
+  final uri = Uri.tryParse(url);
+  if (uri == null) return;
+  await launchUrl(uri, mode: LaunchMode.externalApplication);
+}
+
+Future<void> _addToMyGyms(BuildContext context, WidgetRef ref, Gym gym) async {
+  final userId = Supabase.instance.client.auth.currentUser?.id;
+  if (userId == null) return;
+  final db = ref.read(databaseProvider);
+  await db.gymsDao.updateUserId(gym.id, userId);
+  ref.invalidate(myGymsProvider);
+  ref.invalidate(directoryGymsProvider);
+  ref.invalidate(gymListProvider);
+  ref.invalidate(gymDetailProvider(gym.id));
+  if (context.mounted) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('"${gym.name}" added to My Gyms')),
+    );
+  }
+}
+
+class _InfoSection extends StatelessWidget {
+  const _InfoSection({required this.children});
+  final List<Widget> children;
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  const _InfoRow({required this.icon, required this.label, this.onTap, this.color});
+  final IconData icon;
+  final String label;
+  final VoidCallback? onTap;
+  final Color? color;
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: color ?? Colors.grey),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(label, style: Theme.of(context).textTheme.bodyMedium),
+            ),
+            if (onTap != null)
+              const Icon(Icons.open_in_new, size: 14, color: Colors.grey),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _AmenitiesSection extends StatelessWidget {
+  const _AmenitiesSection({required this.gym});
+  final Gym gym;
+  @override
+  Widget build(BuildContext context) {
+    final items = <_Amenity>[
+      _Amenity('Bouldering', Icons.terrain, gym.hasBouldering == true),
+      _Amenity('Top Rope', Icons.height, gym.hasTopRope == true),
+      _Amenity('Lead', Icons.trending_up, gym.hasLead == true),
+      _Amenity('Auto Belay', Icons.sync_alt, gym.hasAutoBelay == true),
+      _Amenity('Training Area', Icons.fitness_center, gym.hasTrainingArea == true),
+      _Amenity('Yoga', Icons.self_improvement, gym.hasYoga == true),
+      _Amenity('Pro Shop', Icons.shopping_bag, gym.hasProShop == true),
+      _Amenity('Cafe', Icons.local_cafe, gym.hasCafe == true),
+      _Amenity('Showers', Icons.shower, gym.hasShowers == true),
+      _Amenity('Parking', Icons.local_parking, gym.hasParking == true),
+    ].where((a) => a.present).toList();
+
+    if (items.isEmpty) return const SizedBox.shrink();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Wrap(
+        spacing: 8,
+        runSpacing: 6,
+        children: items
+            .map((a) => Chip(
+                  avatar: Icon(a.icon, size: 18),
+                  label: Text(a.label),
+                  visualDensity: VisualDensity.compact,
+                ))
+            .toList(),
+      ),
+    );
+  }
+}
+
+class _Amenity {
+  final String label;
+  final IconData icon;
+  final bool present;
+  const _Amenity(this.label, this.icon, this.present);
 }
