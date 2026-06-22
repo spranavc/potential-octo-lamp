@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -34,13 +36,46 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
   String? _climbNotes;
   List<int> _selectedProjectIds = [];
   bool _hasAttemptedCurrentProblem = false;
+  Timer? _elapsedTimer;
+  Duration _elapsed = Duration.zero;
 
+  @override
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _ensureSessionStarted();
     });
+  }
+
+  @override
+  void dispose() {
+    _elapsedTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startTimer() {
+    final state = ref.read(activeSessionProvider);
+    if (state.startedAt == null) return;
+    _elapsedTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!mounted) return;
+      final state = ref.read(activeSessionProvider);
+      if (state.isActive && state.startedAt != null) {
+        setState(() {
+          _elapsed = DateTime.now().difference(state.startedAt!);
+        });
+      }
+    });
+  }
+
+  String _formatDuration(Duration d) {
+    final hours = d.inHours;
+    final minutes = d.inMinutes.remainder(60);
+    final seconds = d.inSeconds.remainder(60);
+    if (hours > 0) {
+      return '${hours}h ${minutes.toString().padLeft(2, '0')}m ${seconds.toString().padLeft(2, '0')}s';
+    }
+    return '${minutes}m ${seconds.toString().padLeft(2, '0')}s';
   }
 
   Future<void> _ensureSessionStarted() async {
@@ -102,6 +137,7 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
     if (!mounted) return;
     try {
       await ref.read(activeSessionProvider.notifier).start(gymId: gymId);
+      _startTimer();
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -401,6 +437,16 @@ class _ActiveSessionScreenState extends ConsumerState<ActiveSessionScreen> {
               child: Column(
                 children: [
                   const SizedBox(height: 12),
+
+                // Elapsed timer
+                Text(
+                  _formatDuration(_elapsed),
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                ),
+                const SizedBox(height: 4),
 
                 // Project chip above the card
                 _ProjectChip(

@@ -95,29 +95,39 @@ class SessionLogHome extends ConsumerWidget {
         error: (err, _) => Center(child: Text('Error: $err')),
       ),
       ),
-      floatingActionButton: isLogging
+      floatingActionButton: null,
+      bottomNavigationBar: isLogging
           ? null
-          : Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  FloatingActionButton.extended(
-                    heroTag: 'new-project-from-log',
-                    onPressed: () => context.go('/session-log/projects'),
-                    icon: const Icon(Icons.rocket_launch),
-                    label: const Text('New Project'),
-                    backgroundColor: Colors.deepOrange,
-                    foregroundColor: Colors.white,
-                  ),
-                  const SizedBox(width: 12),
-                  FloatingActionButton.extended(
-                    heroTag: 'new-session',
-                    onPressed: () => context.go('/session-log/active'),
-                    icon: const Icon(Icons.add),
-                    label: const Text('New Session'),
-                  ),
-                ],
+          : SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 12),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () => context.go('/session-log/projects'),
+                        icon: const Icon(Icons.rocket_launch),
+                        label: const Text('New Project'),
+                        style: FilledButton.styleFrom(
+                          backgroundColor: Colors.deepOrange,
+                          foregroundColor: Colors.white,
+                          minimumSize: const Size(0, 48),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: FilledButton.icon(
+                        onPressed: () => context.go('/session-log/active'),
+                        icon: const Icon(Icons.add),
+                        label: const Text('New Session'),
+                        style: FilledButton.styleFrom(
+                          minimumSize: const Size(0, 48),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
     );
