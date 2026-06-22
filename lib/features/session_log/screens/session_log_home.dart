@@ -72,11 +72,28 @@ class SessionLogHome extends ConsumerWidget {
       ),
       floatingActionButton: isLogging
           ? null
-          : FloatingActionButton.extended(
-              heroTag: 'new-session',
-              onPressed: () => context.go('/session-log/active'),
-              icon: const Icon(Icons.add),
-              label: const Text('New Session'),
+          : Padding(
+              padding: const EdgeInsets.only(bottom: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  FloatingActionButton.extended(
+                    heroTag: 'new-project-from-log',
+                    onPressed: () => context.go('/session-log/projects'),
+                    icon: const Icon(Icons.rocket_launch),
+                    label: const Text('New Project'),
+                    backgroundColor: Colors.deepOrange,
+                    foregroundColor: Colors.white,
+                  ),
+                  const SizedBox(width: 12),
+                  FloatingActionButton.extended(
+                    heroTag: 'new-session',
+                    onPressed: () => context.go('/session-log/active'),
+                    icon: const Icon(Icons.add),
+                    label: const Text('New Session'),
+                  ),
+                ],
+              ),
             ),
     );
   }
