@@ -432,60 +432,73 @@ class SyncService {
   // Internal helpers
   // ---------------------------------------------------------------------------
 
-  /// Ensure [gymIds] exist in Supabase. Pushes any missing gyms from local DB.
+  /// Ensure [gymIds] exist in Supabase. Pushes any matching gyms from local DB.
   Future<void> _ensureGymsPushed(List<int> gymIds, String userId) async {
     if (gymIds.isEmpty) return;
-    final rows = await (db.select(db.gyms)
-          ..where((g) => g.id.isIn(gymIds) & g.userId.equals(userId)))
-        .get();
-    if (rows.isEmpty) return;
-    final now = DateTime.now();
-    final batch = rows.map((g) => {
-          'id': g.id,
-          'name': g.name,
-          'user_id': g.userId,
-          'latitude': g.latitude,
-          'longitude': g.longitude,
-          'created_at': g.createdAt.toIso8601String(),
+    debugPrint('[Sync] _ensureGymsPushed: looking up gym IDs $gymIds');
+    // Fetch each gym individually since Drift isIn may be flaky
+    for (final gymId in gymIds) {
+      final gym = await (db.select(db.gyms)
+            ..where((g) => g.id.equals(gymId)))
+          .getSingleOrNull();
+      if (gym == null) {
+        debugPrint('[Sync] _ensureGymsPushed: gym $gymId not found locally');
+        continue;
+      }
+      final now = DateTime.now();
+      try {
+        await supabase.from('gyms').upsert({
+          'id': gym.id,
+          'name': gym.name,
+          'user_id': gym.userId,
+          'latitude': gym.latitude,
+          'longitude': gym.longitude,
+          'created_at': gym.createdAt.toIso8601String(),
           'updated_at': now.toIso8601String(),
-        }).toList();
-    try {
-      await supabase.from('gyms').upsert(batch);
-      debugPrint('[Sync] Ensured ${batch.length} gyms pushed');
-    } catch (e) {
-      debugPrint('[Sync] _ensureGymsPushed failed: $e');
+        });
+        debugPrint('[Sync] _ensureGymsPushed: gym ${gym.id} pushed');
+      } catch (e) {
+        debugPrint('[Sync] _ensureGymsPushed: gym ${gym.id} FAILED: $e');
+      }
     }
   }
 
-  /// Ensure [sessionIds] exist in Supabase. Pushes any missing sessions (and
+  /// Ensure [sessionIds] exist in Supabase. Pushes any matching sessions (and
   /// their gyms) from local DB.
   Future<void> _ensureSessionsPushed(List<int> sessionIds, String userId) async {
     if (sessionIds.isEmpty) return;
-    // Push any missing gyms first
-    final sessionRows = await (db.select(db.sessions)
-          ..where((s) => s.id.isIn(sessionIds) & s.userId.equals(userId)))
-        .get();
-    if (sessionRows.isEmpty) return;
-    await _ensureGymsPushed(
-        sessionRows.map((s) => s.gymId).toSet().toList(), userId);
+    // Push gyms first
+    final gymIds = <int>{};
+    for (final sid in sessionIds) {
+      final s = await (db.select(db.sessions)
+            ..where((s) => s.id.equals(sid)))
+          .getSingleOrNull();
+      if (s != null) gymIds.add(s.gymId);
+    }
+    await _ensureGymsPushed(gymIds.toList(), userId);
 
-    final now = DateTime.now();
-    final batch = sessionRows.map((s) => {
-          'id': s.id,
-          'gym_id': s.gymId,
-          'wall_id': s.wallId,
-          'started_at': s.startedAt.toIso8601String(),
-          'ended_at': s.endedAt?.toIso8601String(),
-          'notes': s.notes,
-          'user_id': s.userId,
-          'created_at': s.createdAt.toIso8601String(),
+    for (final sid in sessionIds) {
+      final session = await (db.select(db.sessions)
+            ..where((s) => s.id.equals(sid)))
+          .getSingleOrNull();
+      if (session == null) continue;
+      final now = DateTime.now();
+      try {
+        await supabase.from('sessions').upsert({
+          'id': session.id,
+          'gym_id': session.gymId,
+          'wall_id': session.wallId,
+          'started_at': session.startedAt.toIso8601String(),
+          'ended_at': session.endedAt?.toIso8601String(),
+          'notes': session.notes,
+          'user_id': session.userId,
+          'created_at': session.createdAt.toIso8601String(),
           'updated_at': now.toIso8601String(),
-        }).toList();
-    try {
-      await supabase.from('sessions').upsert(batch);
-      debugPrint('[Sync] Ensured ${batch.length} sessions pushed');
-    } catch (e) {
-      debugPrint('[Sync] _ensureSessionsPushed failed: $e');
+        });
+        debugPrint('[Sync] _ensureSessionsPushed: session ${session.id} pushed');
+      } catch (e) {
+        debugPrint('[Sync] _ensureSessionsPushed: session ${session.id} FAILED: $e');
+      }
     }
   }
 
